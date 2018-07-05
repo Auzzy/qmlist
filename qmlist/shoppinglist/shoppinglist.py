@@ -38,43 +38,6 @@ class PersistentShoppingList(object):
     def is_editable(self):
         return self.due >= datetime.datetime.now()
 
-    '''
-    def save(self):
-        self._remove_items()
-        self._add_items()
-
-    def _add_items(self):
-        while self._to_add:
-            item = self._add_item(self._to_add.pop())
-            self.items.append(item)
-
-    def _add_item(self, item_name):
-        item_raw_dict = rtmlib.add_to_list(self._client, self._id, self.due, self.tags, item_name)[0]
-        item = Item.load(item_raw_dict)
-        self.items.append(item)
-        return item
-
-    def _remove_items(self):
-        while self._to_delete:
-            item = self._remove_item(self._to_delete.pop())
-            self.items.remove(item)
-
-    def _remove_item(self, item_name):
-        item = self.find_item(item_name, self.due, self.tags)
-        rtmlib.remove_from_list(self._client, self._id, item._id, item._task_id)
-        return item
-
-    def find_item(self, item_name, due=None, tags=[]):
-        for item in self.items:
-            if item.name == item_name and (not due or item.due == due) and (not tags or item.tags == tags):
-                return item
-        return None
-
-    def get_items_json(self):
-        return ([{"name": item.name} for item in self.items if item.name not in self._to_delete]
-            + [{"name": item_name} for item_name in self._to_add])
-    '''
-
 class _ItemBase(object):
     def __init__(self, name, due, tags, quantity=0):
         self.name = name
