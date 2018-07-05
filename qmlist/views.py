@@ -31,7 +31,7 @@ def get_shopping_list(name):
 @app.route("/")
 @login_required
 def home():
-    shopping_list_names = [shopping_list.name for shopping_list in sorted(model.ShoppingList.query.all(), key=attrgetter("departure"))]
+    shopping_list_names = [shopping_list.name for shopping_list in model.ShoppingList.query.order_by(model.ShoppingList.departure).all()]
     default_list_name = model.ShoppingList.next().name
     return render_template('index.html', default_list_name=default_list_name, shopping_list_names=shopping_list_names)
 
