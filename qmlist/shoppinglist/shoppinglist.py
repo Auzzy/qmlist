@@ -5,15 +5,15 @@ from qmlist.shoppinglist.rtm import rtmlib
 
 class PersistentShoppingList(object):
     @staticmethod
-    def load(name, id, due, tags=[], client=None):
+    def load(name, id, departure, tags=[], client=None):
         client = client or rtmlib.connect()
         
         items = [Item.load(rtm_item) for rtm_item in rtmlib.load_list_items(client, id) if rtm_item["tags"] == tags]
-        return PersistentShoppingList(id, name, items, due, tags, client)
+        return PersistentShoppingList(id, name, items, departure, tags, client)
 
-    def __init__(self, id, name, items, due, tags, client):
+    def __init__(self, id, name, items, departure, tags, client):
         self._id = id
-        self.due = due
+        self.departure = departure
         self.tags = tags
         self.items = {item.name: item for item in items}
         self.name = name
@@ -36,12 +36,11 @@ class PersistentShoppingList(object):
                 del self.items[name]
 
     def is_editable(self):
-        return self.due >= datetime.datetime.now()
+        return self.departure >= datetime.datetime.now()
 
 class _ItemBase(object):
-    def __init__(self, name, due, tags, quantity=0):
+    def __init__(self, name, tags, quantity=0):
         self.name = name
-        self.due = due
         self.tags = tags
         self._quantity = quantity
         self._orig_quantity = quantity
@@ -76,18 +75,17 @@ class Item(_ItemBase):
             item_dict["task_id"],
             item_dict["list_id"],
             name,
-            item_dict["due"],
             item_dict["tags"],
             item_dict["notes"],
             item_dict["completed_datetime"],
             item_dict["priority"],
             int(quantity))
 
-    def create(id, task_id, list_id, name, due, tags=[], notes=None, completed_datetime=None, priority=None, quantity=0):
-        return Item(id, task_id, list_id, name, due, priority, completed_datetime, notes, tags, quantity)
+    def create(id, task_id, list_id, name, tags=[], notes=None, completed_datetime=None, priority=None, quantity=0):
+        return Item(id, task_id, list_id, name, priority, completed_datetime, notes, tags, quantity)
 
-    def __init__(self, id, task_id, list_id, name, due, tags, notes, completed_datetime, priority, quantity):
-        super().__init__(name, due, tags, quantity)
+    def __init__(self, id, task_id, list_id, name, tags, notes, completed_datetime, priority, quantity):
+        super().__init__(name, tags, quantity)
         
         self._id = id
         self._task_id = task_id
@@ -108,14 +106,14 @@ class Item(_ItemBase):
 
 
 class NewItem(_ItemBase):
-    def __init__(self, list_id, name, due, tags, quantity=0):
-        super().__init__(name, due, tags, quantity)
+    def __init__(self, list_id, name, tags, quantity=0):
+        super().__init__(name, tags, quantity)
 
         self._list_id = list_id
 
     def save(self, client):
         if self.quantity != 0:
-            rtmlib.add_to_list(client, self._list_id, self.due, self.tags, self.list_entry)[0]
+            rtmlib.add_to_list(client, self._list_id, tags=self.tags, items=[self.list_entry])[0]
 
 
 class ShellItem(object):
@@ -126,7 +124,7 @@ class ShellItem(object):
 
     def inc(self):
         if not self.__new_item:
-            self.__new_item = NewItem(self.shopping_list._id, self.name, self.shopping_list.due, self.shopping_list.tags)
+            self.__new_item = NewItem(self.shopping_list._id, self.name, self.shopping_list.tags)
             self.shopping_list.items[self.name] = self.__new_item
         return self.__new_item.inc()
 
