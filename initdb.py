@@ -2,7 +2,20 @@ import os
 import sqlite3
 
 from qmlist import model, qmlist, views
-from qmlist.shoppinglist import shoppinglist
+from qmlist.shoppinglist import rtmlib
+
+
+def _load_from_rtm():
+    client = rtmlib.connect()
+
+    next_lists = []
+    for list in rtmlib.get_current_lists(client):
+        if list["name"].startswith("QMList"):
+            name, departure_str = list["name"].split(" -- ")
+            name = name[len("QMList"):].strip()
+            departure = datetime.datetime.strptime(departure_str, "%d-%m-%y %H:%M")
+            next_lists.append({"name": name, "departure": departure, "id": list["id"]})
+    return next_lists
 
 
 def create_departments():
@@ -21,7 +34,7 @@ def create_users():
     model.db.session.commit()
 
 def load_shopping_lists():
-    next_lists = shoppinglist.load_next_lists()
+    next_lists = _load_from_rtm()
     for list in next_lists:
         if not model.ShoppingList.query.filter_by(rtmid=list["id"]).first():
             model.db.session.add(model.ShoppingList(name=list["name"], rtmid=list["id"], departure=list["departure"]))

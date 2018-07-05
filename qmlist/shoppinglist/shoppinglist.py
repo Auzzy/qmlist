@@ -2,17 +2,6 @@ import datetime
 
 from qmlist.shoppinglist.rtm import rtmlib
 
-def load_next_lists():
-    client = rtmlib.connect()
-
-    next_lists = []
-    for list in rtmlib.get_current_lists(client):
-        if list["name"].startswith("QMList"):
-            name, departure_str = list["name"].split(" -- ")
-            name = name[len("QMList"):].strip()
-            departure = datetime.datetime.strptime(departure_str, "%d-%m-%y %H:%M")
-            next_lists.append({"name": name, "departure": departure, "id": list["id"]})
-    return next_lists
 
 class PersistentShoppingList(object):
     @staticmethod
