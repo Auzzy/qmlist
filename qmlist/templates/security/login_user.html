@@ -1,0 +1,40 @@
+{% extends "layout.html" %}
+
+{% block body %}
+{% from "security/_macros.html" import render_field_with_errors, render_field %}
+{% include "security/_messages.html" %}
+
+
+<!-- By default, the height of the container and row match the height of the card; h-100 extends it to the size of the page -->
+<div class="container h-100">
+    <div class="row h-100 justify-content-center align-items-center">
+        <div class="col-4">
+            <div class="card">
+                <div class="card-body">
+                    <h1>{{ _('Login') }}</h1>
+                    <form action="{{ url_for_security('login') }}" method="POST" name="login_user_form">
+            
+                        <div class="form-group">
+                            {{ login_user_form.hidden_tag() }}
+                        </div>
+                        <div class="form-group">
+                            {{ render_field_with_errors(login_user_form.email, class_="form-control") }}
+                        </div>
+                        <div class="form-group">
+                            {{ render_field_with_errors(login_user_form.password, class_="form-control") }}
+                        </div>
+                        <div class="form-check">
+                            {{ render_field(login_user_form.remember, class_="form-check-input") }} {{ login_user_form.remember.label(class_="form-check-label") }}
+                        </div>
+                        <div class="form-group">
+                            {{ render_field(login_user_form.next) }}
+                        </div>
+                        <button type="submit" class="btn btn-primary">Login</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% include "security/_menu.html" %}
+{% endblock %}

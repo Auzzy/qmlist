@@ -1,0 +1,49 @@
+{% extends "layout.html" %}
+
+{% block body %}
+<div class="container mh-100 mt-3">
+    <ul class="nav nav-tabs" id="nav-tabs" role="tablist">
+        <li class="nav-item">
+            <a class="nav-link active" id="search-tab" data-toggle="tab" href="#search" role="tab" aria-controls="search" aria-selected="true">Search</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="browse-tab" data-toggle="tab" href="#browse" role="tab" aria-controls="browse" aria-selected="false">Browse</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" id="list-tab" data-toggle="tab" href="#list" role="tab" aria-controls="list" aria-selected="false">List</a>
+        </li>
+        <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Load Shopping List</a>
+            <div class="dropdown-menu" id="shopping-list-picker">
+                {%- for name in shopping_list_names %}
+                <a class="dropdown-item" data-name="{{ name }}" href="#">{{ name }}</a>
+                {%- endfor %}
+            </div>
+        </li>
+        <li class="nav-item ml-auto">
+            <a class="btn btn-outline-dark" href="{{ url_for('security.logout') }}">Logout</a>
+        </li>
+    </ul>
+    <div class="tab-content mt-2" id="nav-tabs-content">
+        <div class="tab-pane show active" id="search" role="tabpanel" aria-labelledby="search-tab">
+            {% include "tabs/search-tab.html" %}
+        </div>
+        <div class="tab-pane" id="browse" role="tabpanel" aria-labelledby="browse-tab">
+            {% include "tabs/browse-tab.html" %}
+        </div>
+        <div class="tab-pane" id="list" role="tabpanel" aria-labelledby="list-tab">
+            {% include "tabs/shopping-list-tab.html" %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block js %}
+{% include "js/quantity-buttons.js" %}
+{% include "js/search.js" %}
+{% include "js/browse.js" %}
+{% include "js/shopping-list.js" %}
+{% include "js/shopping-list-picker.js" %}
+
+loadShoppingListTab("{{ default_list_name }}")
+{% endblock %}

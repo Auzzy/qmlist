@@ -1,0 +1,174 @@
+import datetime
+import itertools
+import os
+from operator import attrgetter, itemgetter
+
+from flask import jsonify, render_template, request
+from flask_login import logout_user
+from flask_security import current_user, login_required
+
+from qmlist import model, qmlist
+from qmlist.qmlist import app
+from qmlist.shoppinglist import shoppinglist
+
+
+CATEGORY_PAGE_SIZE = 4
+ITEM_PAGE_SIZE = 100
+_SHOPPING_LISTS = {}
+
+def get_shopping_list(name):
+    global _SHOPPING_LISTS
+
+    if name not in _SHOPPING_LISTS:
+        _SHOPPING_LISTS[name] = {}
+
+    if current_user.id not in _SHOPPING_LISTS[name]:
+        shopping_list_db = model.ShoppingList.query.filter_by(name=name).one()
+        _SHOPPING_LISTS[name][current_user.id] = shoppinglist.PersistentShoppingList.load(
+            name, shopping_list_db.rtmid, shopping_list_db.departure, [current_user.department.tag])
+    return _SHOPPING_LISTS[name][current_user.id]
+
+@app.route("/")
+@login_required
+def home():
+    shopping_list_names = [shopping_list.name for shopping_list in sorted(model.ShoppingList.query.all(), key=attrgetter("departure"))]
+    default_list_name = model.ShoppingList.next().name
+    return render_template('index.html', default_list_name=default_list_name, shopping_list_names=shopping_list_names)
+
+@app.route("/search")
+@login_required
+def search():
+    shopping_list_name = request.args["shopping-list"]
+    search_term = request.args["search"]
+    pageno = int(request.args["pageno"])
+
+    shopping_list = get_shopping_list(shopping_list_name)
+
+    all_results = model.Product.query.filter(model.Product.name.contains(search_term))
+    page_results = (all_results
+            .order_by(model.Product.name)
+            .offset((pageno - 1) * ITEM_PAGE_SIZE)
+            .limit(ITEM_PAGE_SIZE)
+            .all())
+    
+    page_result_dicts = [{"name": product.name, "quantity": shopping_list.get_item(product.name).quantity} for product in page_results]
+    return jsonify({"search-results": page_result_dicts, "search-term": search_term, "total-results": all_results.count()})
+
+def _get_category_path(category):
+    if category:
+        return _get_category_path(category.parent) + [category]
+    else:
+        return []
+
+def _get_store_categories_query(current_category, store_name):
+    if current_category:
+        if current_category.children.count():
+            return current_category.children
+        elif current_category.parent:
+            return current_category.parent.children
+    return model.Categories.query.filter_by(store=store_name, parentid=None)
+
+@app.route("/browse/stores")
+@login_required
+def browse_stores():
+    store_name = request.args["storeName"]
+    category = request.args.get("category")
+    page = int(request.args.get("page", "1"))
+
+    current_category = model.Categories.query.filter_by(store=store_name, name=category).one() if category else None
+
+    current_category_path = [category.name for category in _get_category_path(current_category)]
+
+    store_categories_query = _get_store_categories_query(current_category, store_name)
+
+    store_categories_paginator = store_categories_query.order_by(model.Categories.name).paginate(page, CATEGORY_PAGE_SIZE, False)
+    store_categories_json = [{"name": category.name, "id": category.id, "hasChildren": bool(category.children)} for category in store_categories_paginator.items]
+    sorted_store_categories_json = list(sorted(store_categories_json, key=itemgetter("name")))
+
+    page_json = {}
+    if store_categories_paginator.has_next:
+        page_json["next"] = page + 1
+    if store_categories_paginator.has_prev:
+        page_json["prev"] = page - 1
+
+    return jsonify({"store-categories": sorted_store_categories_json, "page": page_json, "current-category": current_category_path})
+
+def _get_subcategories(category):
+    categories = [category]
+    for subcategory in category.children:
+        categories.extend(_get_subcategories(subcategory))
+    return categories
+
+@app.route("/browse/items/")
+@login_required
+def browse_items_page():
+    shopping_list_name = request.args["shopping-list"]
+    store_name = request.args["store-name"]
+    category_name = request.args.get("category")
+    pageno = int(request.args["pageno"])
+
+    shopping_list = get_shopping_list(shopping_list_name)
+
+    current_category_path = []
+    store_products_query = model.Product.query.filter_by(store=store_name)
+    if category_name:
+        current_category = model.Categories.query.filter_by(store=store_name, name=category_name).one()
+
+        subcategory_ids = [subcategory.id for subcategory in _get_subcategories(current_category)]
+        store_products_query = store_products_query.filter(model.Product.categoryid.in_(subcategory_ids))
+
+    store_products = (store_products_query
+            .order_by(model.Product.name)
+            .offset((pageno - 1) * ITEM_PAGE_SIZE)
+            .limit(ITEM_PAGE_SIZE).all())
+
+    store_items_json = []
+    for product in store_products:
+        item = shopping_list.get_item(product.name)
+        store_items_json.append({"name": item.name, "quantity": item.quantity})
+
+    return jsonify({"store-items": store_items_json, "store": store_name, "category": category_name})
+
+@app.route("/load-list")
+@login_required
+def load_shopping_list():
+    shopping_list_name = request.args["shopping-list"]
+    shopping_list = get_shopping_list(shopping_list_name)
+
+    sorted_items = sorted(shopping_list.get_items_json(), key=itemgetter("name"))
+    return jsonify({"shopping-list": [item_json for item_json in sorted_items], "editable": shopping_list.is_editable()})
+
+@app.route("/list/save", methods=["POST"])
+@login_required
+def shopping_list_save():
+    shopping_list_name = request.form["shopping-list"]
+    shopping_list = get_shopping_list(shopping_list_name)
+
+    if shopping_list.is_editable():
+        shopping_list.save()
+    return str(shopping_list.is_editable())
+
+@app.route("/list/item/decr", methods=["POST"])
+@login_required
+def decrement_item_count():
+    shopping_list_name = request.form["shopping-list"]
+    item_name = request.form.get("item-name")
+
+    shopping_list = get_shopping_list(shopping_list_name)
+
+    if shopping_list.is_editable():
+        quantity = shopping_list.get_item(item_name).dec()
+
+    return jsonify({"quantity": quantity})
+
+@app.route("/list/item/incr", methods=["POST"])
+@login_required
+def increment_item_count():
+    shopping_list_name = request.form["shopping-list"]
+    item_name = request.form.get("item-name")
+
+    shopping_list = get_shopping_list(shopping_list_name)
+
+    if shopping_list.is_editable():
+        quantity = shopping_list.get_item(item_name).inc()
+    return jsonify({"quantity": quantity})
