@@ -1,8 +1,9 @@
+import datetime
 import os
 import sqlite3
 
 from qmlist import model, qmlist, views
-from qmlist.shoppinglist import rtmlib
+from qmlist.shoppinglist.rtm import rtmlib
 
 
 def _load_from_rtm():

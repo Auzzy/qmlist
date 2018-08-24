@@ -6,7 +6,7 @@ function layoutCategories(shoppingListName, storeName, category, pageNum) {
             $("#browse-categories-breadcrumb").empty();
 
             for (var index in data["store-categories"]) {
-                addChildCategory(shoppingListName, storeName, category, data["store-categories"][index]);
+                addChildCategory(shoppingListName, storeName, category, data["store-categories"][index], pageNum);
             }
 
             categoryPagingation(shoppingListName, storeName, category, data);
@@ -17,7 +17,7 @@ function layoutCategories(shoppingListName, storeName, category, pageNum) {
         });
 }
 
-function addChildCategory(shoppingListName, storeName, currentCategory, childCategory) {
+function addChildCategory(shoppingListName, storeName, currentCategory, childCategory, pageNum) {
     var card = $("<div></div>")
         .addClass("card")
         .append($("<a></a>")
@@ -32,9 +32,9 @@ function addChildCategory(shoppingListName, storeName, currentCategory, childCat
                 var categoryElement = this;
                 var category = $(categoryElement).data("category");
                 if ($(categoryElement).data("has-children")) {
-                    layoutCategories(shoppingListName, storeName, category, 1);
+                    layoutCategories(shoppingListName, storeName, category, pageNum);
                 }
-                layoutItems(shoppingListName, storeName, category, 1);
+                layoutItems(shoppingListName, storeName, category);
             }));
     if (currentCategory == childCategory["name"]) {
         card.addClass("border-info").addClass("text-info");

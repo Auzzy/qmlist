@@ -136,7 +136,7 @@ def load_shopping_list():
     shopping_list = get_shopping_list(shopping_list_name)
 
     sorted_items = sorted(shopping_list.get_items_json(), key=itemgetter("name"))
-    return jsonify({"shopping-list": [item_json for item_json in sorted_items], "editable": shopping_list.is_editable()})
+    return jsonify({"shopping-list": sorted_items, "editable": shopping_list.is_editable(), "departure": shopping_list.departure})
 
 @app.route("/list/save", methods=["POST"])
 @login_required
