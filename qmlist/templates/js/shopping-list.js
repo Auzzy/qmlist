@@ -37,7 +37,7 @@ function loadShoppingList(shoppingListName) {
 }
 
 $("#list-tab").click(function() {
-     loadShoppingList($("#list-tab").data("list-name"));
+     loadShoppingList($("#list-tab").attr("data-list-name"));
 });
 
 $("#save-list").click(function() {
