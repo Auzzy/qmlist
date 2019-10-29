@@ -24,14 +24,14 @@ function addChildCategory(shoppingListName, storeName, currentCategory, childCat
             .addClass("card-body")
             .attr("style", "text-decoration: inherit; color: inherit;")
             .attr("href", "#")
-            .data("store", storeName)
-            .data("category", childCategory["name"])
-            .data("has-children", childCategory["hasChildren"])
+            .attr("data-store", storeName)
+            .attr("data-category", childCategory["name"])
+            .attr("data-has-children", childCategory["hasChildren"])
             .text(childCategory["name"])
             .click(function() {
                 var categoryElement = this;
-                var category = $(categoryElement).data("category");
-                if ($(categoryElement).data("has-children")) {
+                var category = $(categoryElement).attr("data-category");
+                if ($(categoryElement).attr("data-has-children")) {
                     layoutCategories(shoppingListName, storeName, category, pageNum);
                 }
                 layoutItems(shoppingListName, storeName, category);
@@ -93,7 +93,7 @@ function categoryBreadcrumb(shoppingListName, storeName, data) {
                 .attr("data-category", data["current-category"][index])
                 .attr("style", "cursor:pointer; color:blue; text-decoration:underline;")
                 .click(function() {
-                    var category = $(this).data("category");
+                    var category = $(this).attr("data-category");
                     layoutCategories(shoppingListName, storeName, category, 1);
                     layoutItems(shoppingListName, storeName, category, 1);
                 }));
@@ -115,9 +115,9 @@ function layoutItems(shoppingListName, storeName, category, pageno) {
 
     $.get("{{ url_for('browse_items_page')}}", {"shopping-list": shoppingListName, "store-name": storeName, "category": category, "pageno": pageno})
         .done(function(data) {
-            $("#browse-items").data("store", data["store"]);
-            $("#browse-items").data("category", data["category"]);
-            $("#browse-items").data("next-page", pageno + 1);
+            $("#browse-items").attr("data-store", data["store"]);
+            $("#browse-items").attr("data-category", data["category"]);
+            $("#browse-items").attr("data-next-page", pageno + 1);
 
             for (var index in data["store-items"]) {
                 var quantity = quantityButtons(
@@ -151,25 +151,25 @@ function layoutItems(shoppingListName, storeName, category, pageno) {
 
 $("#browse-stores .nav-link").click(function() {
     var storeElement = this;
-    var shoppingListName = $("#list-tab").data("list-name");
+    var shoppingListName = $("#list-tab").attr("data-list-name");
 
     $("#browse-stores .nav-link").removeClass("active");
     $(storeElement).addClass("active");
-    layoutCategories(shoppingListName, $(storeElement).data("name"), null, 1);
-    layoutItems(shoppingListName, $(storeElement).data("name"), null, 1);
+    layoutCategories(shoppingListName, $(storeElement).attr("data-name"), null, 1);
+    layoutItems(shoppingListName, $(storeElement).attr("data-name"), null, 1);
 });
 
 $('#browse-items').on('scroll', function detectBottom() {
-    var shoppingListName = $("#list-tab").data("list-name");
+    var shoppingListName = $("#list-tab").attr("data-list-name");
     
     if($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight - 1000) {
         $('#browse-items').off('scroll');
 
         layoutItems(
             shoppingListName,
-            $("#browse-items").data("store"),
-            $("#browse-items").data("category"),
-            parseInt($("#browse-items").data("next-page")));
+            $("#browse-items").attr("data-store"),
+            $("#browse-items").attr("data-category"),
+            parseInt($("#browse-items").attr("data-next-page")));
 
         setTimeout(function () {
             $('#browse-items').on('scroll', detectBottom);

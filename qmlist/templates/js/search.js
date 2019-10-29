@@ -15,8 +15,8 @@ function search(shoppingListName, searchTerm, pageno) {
         .done(function(results) {
             var searchTerm = results["search-term"];
             // $("#search-results").empty();
-            $("#search-results").data("search-term", searchTerm)
-            $("#search-results").data("next-page", pageno + 1);
+            $("#search-results").attr("data-search-term", searchTerm)
+            $("#search-results").attr("data-next-page", pageno + 1);
 
             results["search-results"].forEach(function(result, index) {
                 var quantity = quantityButtons(
@@ -60,27 +60,27 @@ function search(shoppingListName, searchTerm, pageno) {
 }
 
 $("#search-button").click(function() {
-    search($("#list-tab").data("list-name"));
+    search($("#list-tab").attr("data-list-name"));
 });
 
 $("#search-box").keypress(function(event){
     var keycode = (event.keyCode ? event.keyCode : event.which);
     // ENTER
     if(keycode == '13') {
-        search($("#list-tab").data("list-name"));
+        search($("#list-tab").attr("data-list-name"));
     }
 });
 
 $('#search-results').on('scroll', function detectBottom() {
-    var shoppingListName = $("#list-tab").data("list-name");
+    var shoppingListName = $("#list-tab").attr("data-list-name");
     
     if($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight - 1000) {
         $('#search-results').off('scroll');
 
         search(
             shoppingListName,
-            $("#search-results").data("search-term"),
-            parseInt($("#search-results").data("next-page")));
+            $("#search-results").attr("data-search-term"),
+            parseInt($("#search-results").attr("data-next-page")));
 
         setTimeout(function () {
             $('#search-results').on('scroll', detectBottom);
