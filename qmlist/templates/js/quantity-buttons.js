@@ -36,7 +36,7 @@ function incrButton(shoppingListName, itemName) {
                     if (data["quantity"] > 0) {
                         incrBtn.parents(".quantity-section").children(".quantity").text(data["quantity"]);
                         if (!incrBtn.parents(".quantity-section").children(".decr-btn").length) {
-                            incrBtn.parents(".quantity-section").prepend(decrButton(itemName));
+                            incrBtn.parents(".quantity-section").prepend(decrButton(shoppingListName, itemName));
                         }
                     }
                 })
