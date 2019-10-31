@@ -14,3 +14,23 @@
 .row.vertical-divider div[class^="col-"]:last-child {
   border-right: none;
 }
+
+.arrow {
+  width: 0;
+  height: 0;
+  border-width: 33px 0px;
+  border-color: transparent black;
+  border-style: solid;
+}
+
+.left-arrow {
+  border-right-width: 16px;
+}
+
+.right-arrow {
+  border-left-width: 16px;
+}
+
+.arrow-disabled {
+  border-color: transparent LightGray;
+}
