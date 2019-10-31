@@ -30,9 +30,8 @@ class PersistentShoppingList(object):
 
     def save(self):
         for name in list(self.items.keys()):
-            item = self.items[name]
-            item.save(self._client)
-            if item.quantity == 0:
+            self.items[name] = self.items[name].save(self._client)
+            if self.items[name].quantity == 0:
                 del self.items[name]
 
     def is_editable(self):
@@ -103,6 +102,7 @@ class Item(_ItemBase):
             self.delete(client)
         elif self.changed:
             rtmlib.rename_item(client, self._list_id, self._id, self._task_id, self.list_entry)
+        return self
 
 
 class NewItem(_ItemBase):
@@ -113,7 +113,9 @@ class NewItem(_ItemBase):
 
     def save(self, client):
         if self.quantity != 0:
-            rtmlib.add_to_list(client, self._list_id, tags=self.tags, items=[self.list_entry])[0]
+            item_entry = rtmlib.add_to_list(client, self._list_id, self.list_entry, tags=self.tags)[0]
+            return Item.load(item_entry)
+        return self
 
 
 class ShellItem(object):
