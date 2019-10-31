@@ -156,6 +156,7 @@ def decrement_item_count():
 
     shopping_list = get_shopping_list(shopping_list_name)
 
+    quantity = 0
     if shopping_list.is_editable():
         quantity = shopping_list.get_item(item_name).dec()
 
@@ -169,6 +170,8 @@ def increment_item_count():
 
     shopping_list = get_shopping_list(shopping_list_name)
 
+    quantity = 0
     if shopping_list.is_editable():
         quantity = shopping_list.get_item(item_name).inc()
+
     return jsonify({"quantity": quantity})

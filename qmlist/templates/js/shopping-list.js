@@ -45,7 +45,7 @@ $("#save-list").click(function() {
         .removeClass("text-danger")
         .addClass("text-muted")
         .text("Saving...")
-    $.post("{{ url_for('shopping_list_save') }}")
+    $.post("{{ url_for('shopping_list_save') }}", {"shopping-list": $("#list-tab").attr("data-list-name")})
         .done(function(data) {
             $("#save-list-status").text("Saved at " + new Date().toLocaleTimeString());
             $("#shopping-list .quantity")

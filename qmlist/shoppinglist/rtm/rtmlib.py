@@ -83,7 +83,7 @@ def _add_item_to_list(rtm_client, timeline, list_id, item, due_date, tags_str):
 
     return _item_as_dict(task_result.list.taskseries, list_id)
 
-def add_to_list(rtm_client, list_id, due_date=None, tags=[], *items):
+def add_to_list(rtm_client, list_id, *items, due_date=None, tags=[]):
     """due_date should be a date or datetime object
     tags should be a list of strings."""
     tags_str = ",".join([str(tag) for tag in tags])
