@@ -3,7 +3,7 @@ function layoutCategories(pageNum) {
     var category = $("#browse-items").attr("data-category");
     $.get("{{ url_for('browse_stores') }}", {storeName: storeName, category: category, page: pageNum})
         .done(function(data) {
-            $("#browse-categories").empty();
+            $("#browse-categories-content").empty();
             $("#browse-categories-pagination").empty();
             $("#browse-categories-breadcrumb").empty();
 
@@ -44,43 +44,26 @@ function addChildCategory(childCategory, pageNum) {
         card.addClass("border-info").addClass("text-info");
     }
 
-    $("#browse-categories")
+    $("#browse-categories-content")
         .append($("<div></div>")
             .addClass("col-3")
-            .addClass("mt-3")
             .append(card));
 }
 
 function categoryPagingation(data) {
-    $("#browse-categories-pagination")
-        .append($("<div></div>")
-            .addClass("col-1")
-            .append($("<button></button>")
-                .addClass("btn")
-                .addClass("btn-outline-primary")
-                .attr("id", "browse-category-prev")
-                .text("Prev")))
-        .append($("<div></div>")
-            .addClass("col-1")
-            .append($("<button></button>")
-                .addClass("btn")
-                .addClass("btn-outline-primary")
-                .attr("id", "browse-category-next")
-                .text("Next")));
-
     if (data["page"]["next"]) {
-        $("#browse-category-next").click(function() {
-            layoutCategories(shoppingListName, storeName, category, data["page"]["next"]);
-        });
+        $("#browse-category-next").removeClass("arrow-disabled");
+        $("#browse-category-next").attr("data-page", data["page"]["next"]);
     } else {
-        $("#browse-category-next").attr("disabled", "disabled");
+        $("#browse-category-next").addClass("arrow-disabled");
+        $("#browse-category-next").removeAttr("data-page");
     }
     if (data["page"]["prev"]) {
-        $("#browse-category-prev").click(function() {
-            layoutCategories(shoppingListName, storeName, category, data["page"]["prev"]);
-        });
+        $("#browse-category-prev").removeClass("arrow-disabled");
+        $("#browse-category-prev").attr("data-page", data["page"]["prev"]);
     } else {
-        $("#browse-category-prev").attr("disabled", "disabled");
+        $("#browse-category-prev").addClass("arrow-disabled");
+        $("#browse-category-prev").removeAttr("data-page");
     }
 }
 
@@ -183,5 +166,17 @@ $('#browse-items').on('scroll', function detectBottom() {
         setTimeout(function () {
             $('#browse-items').on('scroll', detectBottom);
         }, 250);
+    }
+});
+
+$("#browse-category-next").click(function() {
+    if (!$("#browse-category-next").hasClass("arrow-disabled")) {
+        layoutCategories($("#browse-category-next").attr("data-page"));
+    }
+});
+
+$("#browse-category-prev").click(function() {
+    if (!$("#browse-category-prev").hasClass("arrow-disabled")) {
+        layoutCategories($("#browse-category-prev").attr("data-page"));
     }
 });
