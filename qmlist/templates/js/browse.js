@@ -149,15 +149,18 @@ function layoutItems(shoppingListName, storeName, category, pageno) {
         });
 }
 
-$("#browse-stores .nav-link").click(function() {
-    var storeElement = this;
-    var shoppingListName = $("#list-tab").attr("data-list-name");
+$("#nav-tabs").on("show.bs.tab", function(event) {
+    var storeName = $(event.target).attr("data-store-name");
+    if (storeName !== undefined) {
+        var shoppingListName = $("#list-tab").attr("data-list-name");
 
-    $("#browse-stores .nav-link").removeClass("active");
-    $(storeElement).addClass("active");
-    layoutCategories(shoppingListName, $(storeElement).attr("data-name"), null, 1);
-    layoutItems(shoppingListName, $(storeElement).attr("data-name"), null, 1);
+        $("#browse-tab-content").attr("data-store-name", storeName)
+
+        layoutCategories(shoppingListName, storeName, null, 1);
+        layoutItems(shoppingListName, storeName, null, 1);
+    }
 });
+
 
 $('#browse-items').on('scroll', function detectBottom() {
     var shoppingListName = $("#list-tab").attr("data-list-name");
