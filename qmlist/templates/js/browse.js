@@ -1,4 +1,6 @@
-function layoutCategories(shoppingListName, storeName, category, pageNum) {
+function layoutCategories(pageNum) {
+    var storeName = $("#browse-items").attr("data-store");
+    var category = $("#browse-items").attr("data-category");
     $.get("{{ url_for('browse_stores') }}", {storeName: storeName, category: category, page: pageNum})
         .done(function(data) {
             $("#browse-categories").empty();
@@ -6,18 +8,19 @@ function layoutCategories(shoppingListName, storeName, category, pageNum) {
             $("#browse-categories-breadcrumb").empty();
 
             for (var index in data["store-categories"]) {
-                addChildCategory(shoppingListName, storeName, category, data["store-categories"][index], pageNum);
+                addChildCategory(data["store-categories"][index], pageNum);
             }
 
-            categoryPagingation(shoppingListName, storeName, category, data);
-            categoryBreadcrumb(shoppingListName, storeName, data);
+            categoryPagingation(data);
+            categoryBreadcrumb(data);
         })
         .fail(function(jqXHR, textStatus) {
             alert(textStatus);
         });
 }
 
-function addChildCategory(shoppingListName, storeName, currentCategory, childCategory, pageNum) {
+function addChildCategory(childCategory, pageNum) {
+    var storeName = $("#browse-items").attr("data-store");
     var card = $("<div></div>")
         .addClass("card")
         .append($("<a></a>")
@@ -30,12 +33,13 @@ function addChildCategory(shoppingListName, storeName, currentCategory, childCat
             .text(childCategory["name"])
             .click(function() {
                 var categoryElement = this;
-                var category = $(categoryElement).attr("data-category");
+                $("#browse-items").attr("data-category", $(categoryElement).attr("data-category"));
                 if ($(categoryElement).attr("data-has-children")) {
-                    layoutCategories(shoppingListName, storeName, category, pageNum);
+                    layoutCategories(pageNum);
                 }
-                layoutItems(shoppingListName, storeName, category);
+                layoutItems(1);
             }));
+    var currentCategory = $("#browse-items").attr("data-category");
     if (currentCategory == childCategory["name"]) {
         card.addClass("border-info").addClass("text-info");
     }
@@ -47,7 +51,7 @@ function addChildCategory(shoppingListName, storeName, currentCategory, childCat
             .append(card));
 }
 
-function categoryPagingation(shoppingListName, storeName, category, data) {
+function categoryPagingation(data) {
     $("#browse-categories-pagination")
         .append($("<div></div>")
             .addClass("col-1")
@@ -80,7 +84,7 @@ function categoryPagingation(shoppingListName, storeName, category, data) {
     }
 }
 
-function categoryBreadcrumb(shoppingListName, storeName, data) {
+function categoryBreadcrumb(data) {
     for (var index in data["current-category"]) {
         if (index == data["current-category"].length - 1) {
             break;
@@ -93,9 +97,9 @@ function categoryBreadcrumb(shoppingListName, storeName, data) {
                 .attr("data-category", data["current-category"][index])
                 .attr("style", "cursor:pointer; color:blue; text-decoration:underline;")
                 .click(function() {
-                    var category = $(this).attr("data-category");
-                    layoutCategories(shoppingListName, storeName, category, 1);
-                    layoutItems(shoppingListName, storeName, category, 1);
+                    $("#browse-items").attr("data-category", $(this).attr("data-category"));
+                    layoutCategories(1);
+                    layoutItems(1);
                 }));
     }
     $("#browse-categories-breadcrumb")
@@ -104,7 +108,7 @@ function categoryBreadcrumb(shoppingListName, storeName, data) {
                 .text(data["current-category"][data["current-category"].length - 1]));
 }
 
-function layoutItems(shoppingListName, storeName, category, pageno) {
+function layoutItems(pageno) {
     if (pageno === undefined || pageno === null) {
         pageno = 1;
     }
@@ -113,6 +117,9 @@ function layoutItems(shoppingListName, storeName, category, pageno) {
         $("#browse-items").empty();
     }
 
+    var shoppingListName = $("#list-tab").attr("data-list-name");
+    var storeName = $("#browse-items").attr("data-store");
+    var category = $("#browse-items").attr("data-category");
     $.get("{{ url_for('browse_items_page')}}", {"shopping-list": shoppingListName, "store-name": storeName, "category": category, "pageno": pageno})
         .done(function(data) {
             $("#browse-items").attr("data-store", data["store"]);
@@ -153,11 +160,14 @@ $("#nav-tabs").on("show.bs.tab", function(event) {
     var storeName = $(event.target).attr("data-store-name");
     if (storeName !== undefined) {
         var shoppingListName = $("#list-tab").attr("data-list-name");
+    
+        $("#browse-tab-content").attr("data-store-name", storeName);
+        $("#browse-items").attr("data-store", storeName);
+        $("#browse-items").removeAttr("data-category");
+        $("#browse-items").attr("data-next-page", 1);
 
-        $("#browse-tab-content").attr("data-store-name", storeName)
-
-        layoutCategories(shoppingListName, storeName, null, 1);
-        layoutItems(shoppingListName, storeName, null, 1);
+        layoutCategories(1);
+        layoutItems(1);
     }
 });
 
@@ -168,14 +178,10 @@ $('#browse-items').on('scroll', function detectBottom() {
     if($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight - 1000) {
         $('#browse-items').off('scroll');
 
-        layoutItems(
-            shoppingListName,
-            $("#browse-items").attr("data-store"),
-            $("#browse-items").attr("data-category"),
-            parseInt($("#browse-items").attr("data-next-page")));
+        layoutItems(parseInt($("#browse-items").attr("data-next-page")));
 
         setTimeout(function () {
             $('#browse-items').on('scroll', detectBottom);
         }, 250);
     }
-})
+});
