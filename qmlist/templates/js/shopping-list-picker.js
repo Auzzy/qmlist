@@ -10,11 +10,7 @@ function loadShoppingListTab(shoppingListName) {
             search(shoppingListName, searchTerm, 1);
         }
     } else if ($("#browse-rd-tab").hasClass("active") || $("#browse-bjs-tab").hasClass("active")) {
-        var store = $("#browse-items").attr("data-store");
-        var category = $("#browse-items").attr("data-category");
-        if (store) {
-            layoutItems(shoppingListName, store, category, 1);
-        }
+        layoutItems(1);
     }
 }
 
