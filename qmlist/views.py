@@ -105,11 +105,10 @@ def browse_items_page():
     shopping_list_name = request.args["shopping-list"]
     store_name = request.args["store-name"]
     category_name = request.args.get("category")
-    pageno = int(request.args["pageno"])
+    page = int(request.args["pageno"])
 
     shopping_list = get_shopping_list(shopping_list_name)
 
-    current_category_path = []
     store_products_query = model.Product.query.filter_by(store=store_name)
     if category_name:
         current_category = model.Categories.query.filter_by(store=store_name, name=category_name).one()
@@ -117,17 +116,20 @@ def browse_items_page():
         subcategory_ids = [subcategory.id for subcategory in _get_subcategories(current_category)]
         store_products_query = store_products_query.filter(model.Product.categoryid.in_(subcategory_ids))
 
-    store_products = (store_products_query
-            .order_by(model.Product.name)
-            .offset((pageno - 1) * ITEM_PAGE_SIZE)
-            .limit(ITEM_PAGE_SIZE).all())
+    store_products_paginator = store_products_query.order_by(model.Product.name).paginate(page, ITEM_PAGE_SIZE, False)
 
     store_items_json = []
-    for product in store_products:
+    for product in store_products_paginator.items:
         item = shopping_list.get_item(product.name)
         store_items_json.append({"name": item.name, "quantity": item.quantity})
 
-    return jsonify({"store-items": store_items_json, "store": store_name, "category": category_name})
+    page_json = {"last": store_products_paginator.pages, "current": store_products_paginator.page}
+    if store_products_paginator.has_next:
+        page_json["next"] = page + 1
+    if store_products_paginator.has_prev:
+        page_json["prev"] = page - 1
+
+    return jsonify({"store-items": store_items_json, "store": store_name, "category": category_name, "page": page_json})
 
 @app.route("/load-list")
 @login_required

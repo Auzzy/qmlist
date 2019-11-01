@@ -11,7 +11,7 @@ function layoutCategories(pageNum) {
                 addChildCategory(data["store-categories"][index], pageNum);
             }
 
-            categoryPagingation(data);
+            categoryPagination(data);
             categoryBreadcrumb(data);
         })
         .fail(function(jqXHR, textStatus) {
@@ -50,7 +50,7 @@ function addChildCategory(childCategory, pageNum) {
             .append(card));
 }
 
-function categoryPagingation(data) {
+function categoryPagination(data) {
     if (data["page"]["next"]) {
         $("#browse-category-next").removeClass("arrow-disabled");
         $("#browse-category-next").attr("data-page", data["page"]["next"]);
@@ -107,10 +107,6 @@ function layoutItems(pageno) {
         pageno = 1;
     }
 
-    if (pageno == 1) {
-        $("#browse-items").empty();
-    }
-
     var shoppingListName = $("#list-tab").attr("data-list-name");
     var storeName = $("#browse-items").attr("data-store");
     var category = $("#browse-items").attr("data-category");
@@ -118,7 +114,8 @@ function layoutItems(pageno) {
         .done(function(data) {
             $("#browse-items").attr("data-store", data["store"]);
             $("#browse-items").attr("data-category", data["category"]);
-            $("#browse-items").attr("data-next-page", pageno + 1);
+
+            $("#browse-items").empty();
 
             for (var index in data["store-items"]) {
                 var quantity = quantityButtons(
@@ -142,7 +139,9 @@ function layoutItems(pageno) {
                             .text(data["store-items"][index]["name"]))
                         .append(quantity));
             }
-            
+
+            itemPagination(data);
+
             $('[data-toggle="tooltip"]').tooltip();
         })
         .fail(function(jqXHR, textStatus) {
@@ -150,35 +149,72 @@ function layoutItems(pageno) {
         });
 }
 
+function itemPagination(data) {
+    if (data["page"]["next"]) {
+        $("#browse-items-next").parent().removeClass("disabled");
+        $("#browse-items-next").attr("data-page", data["page"]["next"]);
+        $("#browse-items-last").parent().removeClass("disabled");
+        $("#browse-items-last").attr("data-page", data["page"]["last"]);
+    } else {
+        $("#browse-items-next").parent().addClass("disabled");
+        $("#browse-items-next").removeAttr("data-page");
+        $("#browse-items-last").parent().addClass("disabled");
+        $("#browse-items-last").removeAttr("data-page");
+    }
+    if (data["page"]["prev"]) {
+        $("#browse-items-prev").parent().removeClass("disabled");
+        $("#browse-items-prev").attr("data-page", data["page"]["prev"]);
+        $("#browse-items-first").parent().removeClass("disabled");
+        $("#browse-items-first").attr("data-page", 1);
+    } else {
+        $("#browse-items-prev").parent().addClass("disabled");
+        $("#browse-items-prev").removeAttr("data-page");
+        $("#browse-items-first").parent().addClass("disabled");
+        $("#browse-items-first").removeAttr("data-page");
+    }
+
+    $("#browse-items-pagination-pages").find(".page-link[id!=browse-items-prev][id!=browse-items-next][id!=browse-items-first][id!=browse-items-last]").parent().empty();
+    var currentPage = data["page"]["current"];
+    var paginationWidth = 6;
+    var startPage = Math.max(1, currentPage - Math.floor(paginationWidth / 2));
+    var endPage = Math.min(data["page"]["last"], startPage + paginationWidth);
+    startPage -= paginationWidth - (endPage - startPage);
+    for (var pageno = startPage; pageno < endPage + 1; pageno++) {
+        var paginationEntry = $("<li></li>")
+            .addClass("page-item")
+            .append($("<a></a>")
+                .addClass("page-link")
+                .attr("href", "#")
+                .attr("data-page", pageno)
+                .text(pageno)
+                .click(function() {
+                    layoutItems($(this).attr("data-page"));
+                }));
+
+        if (pageno == currentPage) {
+            paginationEntry.addClass("active");
+        }
+
+        paginationEntry.insertBefore($("#browse-items-next").parent());
+    }
+}
+
 $("#nav-tabs").on("show.bs.tab", function(event) {
     var storeName = $(event.target).attr("data-store-name");
     if (storeName !== undefined) {
         var shoppingListName = $("#list-tab").attr("data-list-name");
-    
+
         $("#browse-tab-content").attr("data-store-name", storeName);
         $("#browse-items").attr("data-store", storeName);
         $("#browse-items").removeAttr("data-category");
-        $("#browse-items").attr("data-next-page", 1);
+        $("#browse-items-prev").parent().addClass("disabled");
+        $("#browse-items-first").parent().addClass("disabled");
 
         layoutCategories(1);
         layoutItems(1);
     }
 });
 
-
-$('#browse-items').on('scroll', function detectBottom() {
-    var shoppingListName = $("#list-tab").attr("data-list-name");
-    
-    if($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight - 1000) {
-        $('#browse-items').off('scroll');
-
-        layoutItems(parseInt($("#browse-items").attr("data-next-page")));
-
-        setTimeout(function () {
-            $('#browse-items').on('scroll', detectBottom);
-        }, 250);
-    }
-});
 
 $("#browse-category-next").click(function() {
     if (!$("#browse-category-next").hasClass("arrow-disabled")) {
@@ -189,5 +225,29 @@ $("#browse-category-next").click(function() {
 $("#browse-category-prev").click(function() {
     if (!$("#browse-category-prev").hasClass("arrow-disabled")) {
         layoutCategories($("#browse-category-prev").attr("data-page"));
+    }
+});
+
+$("#browse-items-last").click(function() {
+    if (!$("#browse-items-last").hasClass("disabled")) {
+        layoutItems($("#browse-items-last").attr("data-page"));
+    }
+});
+
+$("#browse-items-next").click(function() {
+    if (!$("#browse-items-next").hasClass("disabled")) {
+        layoutItems($("#browse-items-next").attr("data-page"));
+    }
+});
+
+$("#browse-items-prev").click(function() {
+    if (!$("#browse-items-prev").hasClass("disabled")) {
+        layoutItems($("#browse-items-prev").attr("data-page"));
+    }
+});
+
+$("#browse-items-first").click(function() {
+    if (!$("#browse-items-first").hasClass("disabled")) {
+        layoutItems(1);
     }
 });
