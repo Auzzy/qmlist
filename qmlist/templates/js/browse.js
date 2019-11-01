@@ -68,6 +68,17 @@ function categoryPagingation(data) {
 }
 
 function categoryBreadcrumb(data) {
+    $("#browse-categories-breadcrumb")
+        .append($("<span>/</span>").addClass("mx-3"))
+        .append($("<span></span>")
+            .text("All")
+            .attr("style", "cursor:pointer; color:blue; text-decoration:underline;")
+            .click(function() {
+                $("#browse-items").removeAttr("data-category");
+                layoutCategories(1);
+                layoutItems(1);
+            }));
+
     for (var index in data["current-category"]) {
         if (index == data["current-category"].length - 1) {
             break;
