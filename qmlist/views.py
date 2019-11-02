@@ -106,6 +106,7 @@ def browse_items_page():
     store_name = request.args["store-name"]
     category_name = request.args.get("category")
     page = int(request.args["pageno"])
+    item_count = int(request.args["item-count"])
 
     shopping_list = get_shopping_list(shopping_list_name)
 
@@ -116,7 +117,7 @@ def browse_items_page():
         subcategory_ids = [subcategory.id for subcategory in _get_subcategories(current_category)]
         store_products_query = store_products_query.filter(model.Product.categoryid.in_(subcategory_ids))
 
-    store_products_paginator = store_products_query.order_by(model.Product.name).paginate(page, ITEM_PAGE_SIZE, False)
+    store_products_paginator = store_products_query.order_by(model.Product.name).paginate(page, item_count, False)
 
     store_items_json = []
     for product in store_products_paginator.items:
