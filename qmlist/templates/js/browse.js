@@ -110,7 +110,8 @@ function layoutItems(pageno) {
     var shoppingListName = $("#list-tab").attr("data-list-name");
     var storeName = $("#browse-items").attr("data-store");
     var category = $("#browse-items").attr("data-category");
-    $.get("{{ url_for('browse_items_page')}}", {"shopping-list": shoppingListName, "store-name": storeName, "category": category, "pageno": pageno})
+    var itemCount = $("#item-count-dropdown").attr("data-item-count");
+    $.get("{{ url_for('browse_items_page')}}", {"shopping-list": shoppingListName, "store-name": storeName, "category": category, "pageno": pageno, "item-count": itemCount})
         .done(function(data) {
             $("#browse-items").attr("data-store", data["store"]);
             $("#browse-items").attr("data-category", data["category"]);
@@ -215,6 +216,11 @@ $("#nav-tabs").on("show.bs.tab", function(event) {
     }
 });
 
+$("#item-count-options").children("a").click(function() {
+    $("#item-count-dropdown").attr("data-item-count", $(this).attr("data-item-count"));
+    $("#item-count-dropdown-button").text($(this).attr("data-item-count"));
+    layoutItems(1);
+});
 
 $("#browse-category-next").click(function() {
     if (!$("#browse-category-next").hasClass("arrow-disabled")) {
