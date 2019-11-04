@@ -40,27 +40,3 @@ function loadShoppingList(shoppingListName) {
 $("#list-tab").click(function() {
      loadShoppingList($("#list-tab").attr("data-list-name"));
 });
-
-$("#save-list").click(function() {
-    $("#save-list-status")
-        .removeClass("text-danger")
-        .addClass("text-muted")
-        .text("Saving...")
-    $.post("{{ url_for('shopping_list_save') }}", {"shopping-list": $("#list-tab").attr("data-list-name")})
-        .done(function(data) {
-            $("#save-list-status").text("Saved at " + new Date().toLocaleTimeString());
-            $("#shopping-list .quantity")
-                .each(function(index, item) {
-                    if ($(item).text() == "0") {
-                        $(item).parents(".list-group-item").remove();
-                    }
-                });
-        })
-        .fail(function(jqXHR, textStatus) {
-            $("#save-list-status")
-                .removeClass("text-muted")
-                .addClass("text-danger")
-                .text("Saving failed");
-            alert(textStatus);
-        });
-});

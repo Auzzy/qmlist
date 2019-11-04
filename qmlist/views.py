@@ -142,16 +142,6 @@ def load_shopping_list():
     sorted_items = sorted(shopping_list.get_items_json(), key=itemgetter("name"))
     return jsonify({"shopping-list": sorted_items, "editable": shopping_list.is_editable(), "departure": shopping_list.departure})
 
-@app.route("/list/save", methods=["POST"])
-@login_required
-def shopping_list_save():
-    shopping_list_name = request.form["shopping-list"]
-    shopping_list = get_shopping_list(shopping_list_name)
-
-    if shopping_list.is_editable():
-        shopping_list.save()
-    return str(shopping_list.is_editable())
-
 @app.route("/list/item/decr", methods=["POST"])
 @login_required
 def decrement_item_count():
@@ -162,7 +152,7 @@ def decrement_item_count():
 
     quantity = 0
     if shopping_list.is_editable():
-        quantity = shopping_list.get_item(item_name).dec()
+        quantity = shopping_list.decrement_item(item_name)
 
     return jsonify({"quantity": quantity})
 
@@ -176,6 +166,6 @@ def increment_item_count():
 
     quantity = 0
     if shopping_list.is_editable():
-        quantity = shopping_list.get_item(item_name).inc()
+        quantity = shopping_list.increment_item(item_name)
 
     return jsonify({"quantity": quantity})
