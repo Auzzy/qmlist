@@ -1,0 +1,19 @@
+{
+	// See https://go.microsoft.com/fwlink/?LinkId=733558
+	// for the documentation about the tasks.json format
+	"version": "2.0.0",
+	"tasks": [
+        {
+            "label": "run-server",
+            "type": "shell",
+            "command": "python3 runner.py",
+            "problemMatcher": []
+        },
+        {
+            "label": "init-db",
+            "type": "shell",
+            "command": "python3 bin/refresh-inventory.py bjs-inventory.json rd-inventory.json && PYTHONPATH=/workspace/qmlist python3 bin/initdb.py bjs-inventory.json rd-inventory.json",
+            "problemMatcher": []
+        }
+   ]
+}
