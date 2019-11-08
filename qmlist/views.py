@@ -50,7 +50,7 @@ def search():
             .offset((pageno - 1) * ITEM_PAGE_SIZE)
             .limit(ITEM_PAGE_SIZE)
             .all())
-    
+
     page_result_dicts = [{"name": product.name, "quantity": shopping_list.get_item(product.name).quantity} for product in page_results]
     return jsonify({"search-results": page_result_dicts, "search-term": search_term, "total-results": all_results.count()})
 
@@ -85,7 +85,7 @@ def browse_stores():
     store_categories_json = [{"name": category.name, "id": category.id, "hasChildren": bool(category.children)} for category in store_categories_paginator.items]
     sorted_store_categories_json = list(sorted(store_categories_json, key=itemgetter("name")))
 
-    page_json = {}
+    page_json = {"current": store_categories_paginator.page}
     if store_categories_paginator.has_next:
         page_json["next"] = page + 1
     if store_categories_paginator.has_prev:

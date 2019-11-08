@@ -1,14 +1,19 @@
-function layoutCategories(pageNum) {
+function layoutCategories(pageno) {
+    if (pageno === undefined || pageno === null) {
+        pageno = $("#browse-items").attr("data-page");
+    }
+
     var storeName = $("#browse-items").attr("data-store");
     var category = $("#browse-items").attr("data-category");
-    $.get("{{ url_for('browse_stores') }}", {storeName: storeName, category: category, page: pageNum})
+    $.get("{{ url_for('browse_stores') }}", {storeName: storeName, category: category, page: pageno})
         .done(function(data) {
+            $("#browse-categpries").attr("data-page", data["page"]["current"]);
             $("#browse-categories-content").empty();
             $("#browse-categories-pagination").empty();
             $("#browse-categories-breadcrumb").empty();
 
             for (var index in data["store-categories"]) {
-                addChildCategory(data["store-categories"][index], pageNum);
+                addChildCategory(data["store-categories"][index], pageno);
             }
 
             categoryPagination(data);
@@ -19,7 +24,7 @@ function layoutCategories(pageNum) {
         });
 }
 
-function addChildCategory(childCategory, pageNum) {
+function addChildCategory(childCategory, pageno) {
     var storeName = $("#browse-items").attr("data-store");
     var card = $("<div></div>")
         .addClass("card")
@@ -35,7 +40,7 @@ function addChildCategory(childCategory, pageNum) {
                 var categoryElement = this;
                 $("#browse-items").attr("data-category", $(categoryElement).attr("data-category"));
                 if ($(categoryElement).attr("data-has-children")) {
-                    layoutCategories(pageNum);
+                    layoutCategories(pageno);
                 }
                 layoutItems(1);
             }));
@@ -104,7 +109,7 @@ function categoryBreadcrumb(data) {
 
 function layoutItems(pageno) {
     if (pageno === undefined || pageno === null) {
-        pageno = 1;
+        pageno = $("#browse-items").attr("data-page");
     }
 
     var shoppingListName = $("#list-tab").attr("data-list-name");
@@ -115,6 +120,7 @@ function layoutItems(pageno) {
         .done(function(data) {
             $("#browse-items").attr("data-store", data["store"]);
             $("#browse-items").attr("data-category", data["category"]);
+            $("#browse-items").attr("data-page", data["page"]["current"]);
 
             $("#browse-items").empty();
 
