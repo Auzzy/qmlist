@@ -3,6 +3,7 @@ function loadShoppingList(shoppingListName) {
         .done(function(data) {
             $("#save-list-status").empty();
             $("#save-list").prop("disabled", !data["editable"]);
+            $("#shopping-list").attr("data-editable", data["editable"]);
 
             $("#shopping-list").empty();
             data["shopping-list"]

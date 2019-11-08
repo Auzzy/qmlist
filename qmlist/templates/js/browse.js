@@ -125,26 +125,31 @@ function layoutItems(pageno) {
             $("#browse-items").empty();
 
             for (var index in data["store-items"]) {
-                var quantity = quantityButtons(
-                    shoppingListName,
-                    data["store-items"][index]["name"],
-                    data["store-items"][index]["quantity"]);
+                var itemElement = $("<li></li>")
+                    .addClass("list-group-item")
+                    .addClass("d-flex")
+                    .addClass("justify-content-between")
+                    .addClass("align-items-center")
+                    .attr("data-name", data["store-items"][index]["name"])
+                    .append($("<div></div>")
+                        .addClass("text-truncate")
+                        .attr("style", "max-width: 93%")
+                        .attr("data-toggle", "tooltip")
+                        .attr("title", data["store-items"][index]["name"])
+                        .text(data["store-items"][index]["name"]));;
 
-                $("#browse-items")
-                    .append($("<li></li>")
-                        .addClass("list-group-item")
-                        .addClass("d-flex")
-                        .addClass("justify-content-between")
-                        .addClass("align-items-center")
-                        .attr("data-name", data["store-items"][index]["name"])
+                if ($("#shopping-list").attr("data-editable") === "true") {
+                    var quantity = quantityButtons(
+                        shoppingListName,
+                        data["store-items"][index]["name"],
+                        data["store-items"][index]["quantity"]);
+
+                    itemElement
                         .attr("data-quantity", data["store-items"][index]["quantity"])
-                        .append($("<div></div>")
-                            .addClass("text-truncate")
-                            .attr("style", "max-width: 93%")
-                            .attr("data-toggle", "tooltip")
-                            .attr("title", data["store-items"][index]["name"])
-                            .text(data["store-items"][index]["name"]))
-                        .append(quantity));
+                        .append(quantity);
+                }
+
+                $("#browse-items").append(itemElement);
             }
 
             itemPagination(data);
