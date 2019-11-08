@@ -2,7 +2,7 @@ function search(shoppingListName, searchTerm, pageno) {
     if (searchTerm === undefined) {
         searchTerm = $("#search-box").val();
     }
-    
+
     if (pageno === undefined || pageno === null) {
         pageno = 1;
     }
@@ -19,11 +19,6 @@ function search(shoppingListName, searchTerm, pageno) {
             $("#search-results").attr("data-next-page", pageno + 1);
 
             results["search-results"].forEach(function(result, index) {
-                var quantity = quantityButtons(
-                    shoppingListName,
-                    result["name"],
-                    result["quantity"]);
-
                 var searchResult = $("<li></li>")
                     .attr("id", "search-result-" + index)
                     .addClass("list-group-item")
@@ -31,14 +26,23 @@ function search(shoppingListName, searchTerm, pageno) {
                     .addClass("justify-content-between")
                     .addClass("align-items-center")
                     .attr("data-name", result["name"])
-                    .attr("data-quantity", result["quantity"])
                     .append($("<div></div>")
                         .addClass("text-truncate")
                         .attr("style", "max-width: 93%")
                         .attr("data-toggle", "tooltip")
                         .attr("title", result["name"])
-                        .text(result["name"]))
-                    .append(quantity);
+                        .text(result["name"]));
+
+                if ($("#shopping-list").attr("data-editable") === "true") {
+                    var quantity = quantityButtons(
+                        shoppingListName,
+                        result["name"],
+                        result["quantity"]);
+
+                    searchResult
+                        .attr("data-quantity", result["quantity"])
+                        .append(quantity);
+                }
 
                 $('[data-toggle="tooltip"]').tooltip();
                 $("#search-results").append(searchResult);
@@ -73,7 +77,7 @@ $("#search-box").keypress(function(event){
 
 $('#search-results').on('scroll', function detectBottom() {
     var shoppingListName = $("#list-tab").attr("data-list-name");
-    
+
     if($(this).scrollTop() + $(this).innerHeight() >= $(this)[0].scrollHeight - 1000) {
         $('#search-results').off('scroll');
 
