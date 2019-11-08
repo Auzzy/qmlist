@@ -6,6 +6,7 @@ from operator import attrgetter, itemgetter
 from flask import jsonify, render_template, request
 from flask_login import logout_user
 from flask_security import current_user, login_required
+from sqlalchemy import func
 
 from qmlist import model, qmlist
 from qmlist.qmlist import app
@@ -44,7 +45,7 @@ def search():
 
     shopping_list = get_shopping_list(shopping_list_name)
 
-    all_results = model.Product.query.filter(model.Product.name.contains(search_term))
+    all_results = model.Product.query.filter(func.lower(model.Product.name).contains(search_term.lower()))
     page_results = (all_results
             .order_by(model.Product.name)
             .offset((pageno - 1) * ITEM_PAGE_SIZE)
