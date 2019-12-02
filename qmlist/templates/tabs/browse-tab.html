@@ -1,15 +1,10 @@
 <div class="container mh-100" id="browse-tab-content">
     <div class="row mt-3" id="browse-categories-pagination"></div>
-    <div class="row mt-3" id="browse-categories-breadcrumb"></div>
-    <div class="row" id="browse-categories">
-        <div class="col-1">
-            <div class="arrow left-arrow float-right" id="browse-category-prev"></div>
-        </div>
-        <div class="col-10">
-            <div class="row" id="browse-categories-content"></div>
-        </div>
-        <div class="col-1">
-            <div class="arrow right-arrow" id="browse-category-next"></div>
+    <div class="row mt-3">
+        <div id="browse-categories-breadcrumb"></div>
+        <div class="dropdown float-left" id="browse-categories-dropdown">
+            <button type="button" class="btn btn-outline-secondary dropdown-toggle" style="border-width: 0px;" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"></button>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton" id="browse-categories-options"></div>
         </div>
     </div>
     <hr />

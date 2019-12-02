@@ -13,9 +13,9 @@ from qmlist.qmlist import app
 from qmlist.shoppinglist import shoppinglist
 
 
-CATEGORY_PAGE_SIZE = 4
 ITEM_PAGE_SIZE = 100
 _SHOPPING_LISTS = {}
+ALL_CATEGORY = "All"
 
 def get_shopping_list(name):
     global _SHOPPING_LISTS
@@ -73,26 +73,16 @@ def _get_store_categories_query(current_category, store_name):
 @login_required
 def browse_stores():
     store_name = request.args["storeName"]
-    category = request.args.get("category")
-    page = int(request.args.get("page", "1"))
+    category = request.args.get("category", ALL_CATEGORY)
 
-    current_category = model.Categories.query.filter_by(store=store_name, name=category).one() if category else None
+    current_category = model.Categories.query.filter_by(store=store_name, name=category).one() if category != ALL_CATEGORY else None
+    current_category_path = [ALL_CATEGORY] + [category.name for category in _get_category_path(current_category)]
 
-    current_category_path = [category.name for category in _get_category_path(current_category)]
-
-    store_categories_query = _get_store_categories_query(current_category, store_name)
-
-    store_categories_paginator = store_categories_query.order_by(model.Categories.name).paginate(page, CATEGORY_PAGE_SIZE, False)
-    store_categories_json = [{"name": category.name, "id": category.id, "hasChildren": bool(category.children.count())} for category in store_categories_paginator.items]
+    store_categories_query = _get_store_categories_query(current_category, store_name).order_by(model.Categories.name)
+    store_categories_json = [{"name": category.name, "id": category.id} for category in store_categories_query.all()]
     sorted_store_categories_json = list(sorted(store_categories_json, key=itemgetter("name")))
 
-    page_json = {"current": store_categories_paginator.page}
-    if store_categories_paginator.has_next:
-        page_json["next"] = page + 1
-    if store_categories_paginator.has_prev:
-        page_json["prev"] = page - 1
-
-    return jsonify({"store-categories": sorted_store_categories_json, "page": page_json, "current-category": current_category_path})
+    return jsonify({"store-categories": sorted_store_categories_json, "current-category": current_category_path})
 
 def _get_subcategories(category):
     categories = [category]
@@ -105,14 +95,14 @@ def _get_subcategories(category):
 def browse_items_page():
     shopping_list_name = request.args["shopping-list"]
     store_name = request.args["store-name"]
-    category_name = request.args.get("category")
+    category_name = request.args.get("category", ALL_CATEGORY)
     page = int(request.args["pageno"])
     item_count = int(request.args["item-count"])
 
     shopping_list = get_shopping_list(shopping_list_name)
 
     store_products_query = model.Product.query.filter_by(store=store_name)
-    if category_name:
+    if category_name != ALL_CATEGORY:
         current_category = model.Categories.query.filter_by(store=store_name, name=category_name).one()
 
         subcategory_ids = [subcategory.id for subcategory in _get_subcategories(current_category)]

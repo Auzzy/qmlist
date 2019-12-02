@@ -1,22 +1,8 @@
-function layoutCategories(pageno) {
-    if (pageno === undefined || pageno === null) {
-        pageno = $("#browse-items").attr("data-page");
-    }
-
+function layoutCategories() {
     var storeName = $("#browse-items").attr("data-store");
     var category = $("#browse-items").attr("data-category");
-    $.get("{{ url_for('browse_stores') }}", {storeName: storeName, category: category, page: pageno})
+    $.get("{{ url_for('browse_stores') }}", {storeName: storeName, category: category})
         .done(function(data) {
-            $("#browse-categpries").attr("data-page", data["page"]["current"]);
-            $("#browse-categories-content").empty();
-            $("#browse-categories-pagination").empty();
-            $("#browse-categories-breadcrumb").empty();
-
-            for (var index in data["store-categories"]) {
-                addChildCategory(data["store-categories"][index], pageno);
-            }
-
-            categoryPagination(data);
             categoryBreadcrumb(data);
         })
         .fail(function(jqXHR, textStatus) {
@@ -24,87 +10,57 @@ function layoutCategories(pageno) {
         });
 }
 
-function addChildCategory(childCategory, pageno) {
-    var storeName = $("#browse-items").attr("data-store");
-    var card = $("<div></div>")
-        .addClass("card")
-        .append($("<a></a>")
-            .addClass("card-body")
-            .attr("style", "text-decoration: inherit; color: inherit;")
-            .attr("href", "#")
-            .attr("data-store", storeName)
-            .attr("data-category", childCategory["name"])
-            .attr("data-has-children", childCategory["hasChildren"])
-            .text(childCategory["name"])
-            .click(function() {
-                var categoryElement = this;
-                $("#browse-items").attr("data-category", $(categoryElement).attr("data-category"));
-                if ($(categoryElement).attr("data-has-children")) {
-                    layoutCategories(pageno);
-                }
-                layoutItems(1);
-            }));
-    var currentCategory = $("#browse-items").attr("data-category");
-    if (currentCategory == childCategory["name"]) {
-        card.addClass("border-info").addClass("text-info");
-    }
-
-    $("#browse-categories-content")
-        .append($("<div></div>")
-            .addClass("col-3")
-            .append(card));
-}
-
-function categoryPagination(data) {
-    if (data["page"]["next"]) {
-        $("#browse-category-next").removeClass("arrow-disabled");
-        $("#browse-category-next").attr("data-page", data["page"]["next"]);
-    } else {
-        $("#browse-category-next").addClass("arrow-disabled");
-        $("#browse-category-next").removeAttr("data-page");
-    }
-    if (data["page"]["prev"]) {
-        $("#browse-category-prev").removeClass("arrow-disabled");
-        $("#browse-category-prev").attr("data-page", data["page"]["prev"]);
-    } else {
-        $("#browse-category-prev").addClass("arrow-disabled");
-        $("#browse-category-prev").removeAttr("data-page");
-    }
-}
-
 function categoryBreadcrumb(data) {
-    $("#browse-categories-breadcrumb")
-        .append($("<span>/</span>").addClass("mx-3"))
-        .append($("<span></span>")
-            .text("All")
-            .attr("style", "cursor:pointer; color:blue; text-decoration:underline;")
-            .click(function() {
-                $("#browse-items").removeAttr("data-category");
-                layoutCategories(1);
-                layoutItems(1);
-            }));
+    $("#browse-categories-breadcrumb").empty();
+    $("#browse-categories-dropdown-button").remove();
 
-    for (var index in data["current-category"]) {
-        if (index == data["current-category"].length - 1) {
-            break;
-        }
+    $("#browse-categories-breadcrumb").append($("<span>/</span>").addClass("mx-3"));
 
+    for (var index = 0; index < data["current-category"].length - 1; index++) {
         $("#browse-categories-breadcrumb")
-            .append($("<span>/</span>").addClass("mx-3"))
             .append($("<span></span>")
                 .text(data["current-category"][index])
                 .attr("data-category", data["current-category"][index])
                 .attr("style", "cursor:pointer; color:blue; text-decoration:underline;")
                 .click(function() {
                     $("#browse-items").attr("data-category", $(this).attr("data-category"));
-                    layoutCategories(1);
+                    layoutCategories();
                     layoutItems(1);
-                }));
+                }))
+            .append($("<span>/</span>").addClass("mx-3"));
     }
+
+    var storeCategories = data["store-categories"].map(category => category["name"]);
+    var currentCategoryName = data["current-category"][data["current-category"].length - 1];
     $("#browse-categories-breadcrumb")
-        .append($("<span>/</span>").addClass("mx-3"))
-        .append($("<span></span>")
-                .text(data["current-category"][data["current-category"].length - 1]));
+        .append($("<span></span>").text(currentCategoryName));
+
+    if (!storeCategories.includes(currentCategoryName)) {
+        $("#browse-categories-breadcrumb").append($("<span>/</span>").addClass("mx-3"));
+    }
+
+    $("#browse-categories-options").empty();
+    for (var index in data["store-categories"]) {
+        addChildCategory(data["store-categories"][index], 1);
+    }
+}
+
+function addChildCategory(childCategory) {
+    var storeName = $("#browse-items").attr("data-store");
+
+    $("#browse-categories-options").append(
+        $("<a></a>")
+            .addClass("dropdown-item")
+            .attr("href", "#")
+            .attr("data-store", storeName)
+            .attr("data-category", childCategory["name"])
+            .text(childCategory["name"])
+            .click(function() {
+                var categoryElement = this;
+                $("#browse-items").attr("data-category", $(categoryElement).attr("data-category"));
+                layoutCategories();
+                layoutItems(1);
+            }));
 }
 
 function layoutItems(pageno) {
@@ -207,18 +163,6 @@ $("#item-count-options").children("a").click(function() {
     $("#item-count-dropdown").attr("data-item-count", $(this).attr("data-item-count"));
     $("#item-count-dropdown-button").text($(this).attr("data-item-count"));
     layoutItems(1);
-});
-
-$("#browse-category-next").click(function() {
-    if (!$("#browse-category-next").hasClass("arrow-disabled")) {
-        layoutCategories($("#browse-category-next").attr("data-page"));
-    }
-});
-
-$("#browse-category-prev").click(function() {
-    if (!$("#browse-category-prev").hasClass("arrow-disabled")) {
-        layoutCategories($("#browse-category-prev").attr("data-page"));
-    }
 });
 
 $("#browse-items-last").click(function() {
