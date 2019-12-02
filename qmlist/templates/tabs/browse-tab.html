@@ -30,16 +30,17 @@
         <div class="col">
             <nav aria-label="Browse store items" id="browse-items-pagination" style="display: inline">
                 <ul class="pagination justify-content-center" id="browse-items-pagination-pages">
-                    <li class="page-item"><a class="page-link" href="#" id="browse-items-first">First Page</a></li>
-                    <li class="page-item"><a class="page-link" href="#" id="browse-items-prev">Previous</a></li>
-                    <li class="page-item"><a class="page-link" href="#" id="browse-items-next">Next</a></li>
-                    <li class="page-item"><a class="page-link" href="#" id="browse-items-last">Last Page</a></li>
+                    <li class="page-item"><a class="page-link" href="#" id="browse-items-first"><i class="fa fa-angle-double-left fa-lg"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="#" id="browse-items-prev"><i class="fa fa-caret-left fa-lg">&nbsp;</i></a></li>
+                    <li class="page-item" style="font-style: italic; margin: 5px 10px 0px;">
+                        <span id="current-page-display"></span> of <span id="last-page-display"></span>
+                    </li>
+                    <li class="page-item"><a class="page-link" href="#" id="browse-items-next"><i class="fa fa-caret-right fa-lg"></i></a></li>
+                    <li class="page-item"><a class="page-link" href="#" id="browse-items-last"><i class="fa fa-angle-double-right fa-lg"></i></a></li>
                 </ul>
             </nav>
         </div>
-        <div class="col-2" style="font-style: italic; margin-top: 5px">
-            page <span id="current-page-display"></span> of <span id="last-page-display"></span>
-        </div>
+        <div class="col-2">&nbsp;</div>
     </div>
     <div class="row">
         <div class="col-12">

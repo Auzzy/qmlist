@@ -161,51 +161,26 @@ function layoutItems(pageno) {
 
 function itemPagination(data) {
     if (data["page"]["next"]) {
-        $("#browse-items-next").parent().removeClass("disabled");
+        $("#browse-items-next").parents(".page-item").removeClass("disabled");
         $("#browse-items-next").attr("data-page", data["page"]["next"]);
-        $("#browse-items-last").parent().removeClass("disabled");
+        $("#browse-items-last").parents(".page-item").removeClass("disabled");
         $("#browse-items-last").attr("data-page", data["page"]["last"]);
     } else {
-        $("#browse-items-next").parent().addClass("disabled");
+        $("#browse-items-next").parents(".page-item").addClass("disabled");
         $("#browse-items-next").removeAttr("data-page");
-        $("#browse-items-last").parent().addClass("disabled");
+        $("#browse-items-last").parents(".page-item").addClass("disabled");
         $("#browse-items-last").removeAttr("data-page");
     }
     if (data["page"]["prev"]) {
-        $("#browse-items-prev").parent().removeClass("disabled");
+        $("#browse-items-prev").parents(".page-item").removeClass("disabled");
         $("#browse-items-prev").attr("data-page", data["page"]["prev"]);
-        $("#browse-items-first").parent().removeClass("disabled");
+        $("#browse-items-first").parents(".page-item").removeClass("disabled");
         $("#browse-items-first").attr("data-page", 1);
     } else {
-        $("#browse-items-prev").parent().addClass("disabled");
+        $("#browse-items-prev").parents(".page-item").addClass("disabled");
         $("#browse-items-prev").removeAttr("data-page");
-        $("#browse-items-first").parent().addClass("disabled");
+        $("#browse-items-first").parents(".page-item").addClass("disabled");
         $("#browse-items-first").removeAttr("data-page");
-    }
-
-    $("#browse-items-pagination-pages").find(".page-link[id!=browse-items-prev][id!=browse-items-next][id!=browse-items-first][id!=browse-items-last]").parent().empty();
-    var currentPage = data["page"]["current"];
-    var paginationWidth = 6;
-    var startPage = Math.max(1, currentPage - Math.floor(paginationWidth / 2));
-    var endPage = Math.min(data["page"]["last"], startPage + paginationWidth);
-    startPage = Math.max(1, endPage - paginationWidth);
-    for (var pageno = startPage; pageno < endPage + 1; pageno++) {
-        var paginationEntry = $("<li></li>")
-            .addClass("page-item")
-            .append($("<a></a>")
-                .addClass("page-link")
-                .attr("href", "#")
-                .attr("data-page", pageno)
-                .text(pageno)
-                .click(function() {
-                    layoutItems($(this).attr("data-page"));
-                }));
-
-        if (pageno == currentPage) {
-            paginationEntry.addClass("active");
-        }
-
-        paginationEntry.insertBefore($("#browse-items-next").parent());
     }
 
     $("#current-page-display").text(data["page"]["current"]);
