@@ -134,9 +134,7 @@ function layoutItems(pageno) {
                     .append($("<div></div>")
                         .addClass("text-truncate")
                         .attr("style", "max-width: 93%")
-                        .attr("data-toggle", "tooltip")
-                        .attr("title", data["store-items"][index]["name"])
-                        .text(data["store-items"][index]["name"]));;
+                        .text(data["store-items"][index]["name"]));
 
                 if ($("#shopping-list").attr("data-editable") === "true") {
                     var quantity = quantityButtons(
