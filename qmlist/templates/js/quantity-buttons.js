@@ -4,7 +4,7 @@ function decrButton(shoppingListName, itemName) {
         .addClass("badge")
         .addClass("badge-danger")
         .addClass("decr-btn")
-        .text("-")
+        .append($("<i></i>").addClass("fa fa-minus fa-xs"))
         .click(function() {
             var decrBtn = $(this);
             $.post("{{ url_for('decrement_item_count') }}", {"shopping-list": shoppingListName, "item-name": itemName})
@@ -28,7 +28,7 @@ function incrButton(shoppingListName, itemName) {
         .addClass("badge")
         .addClass("badge-success")
         .addClass("incr-btn")
-        .text("+")
+        .append($("<i></i>").addClass("fa fa-plus fa-xs"))
         .click(function() {
             var incrBtn = $(this);
             $.post("{{ url_for('increment_item_count') }}", {"shopping-list": shoppingListName, "item-name": itemName})
@@ -52,6 +52,7 @@ function quantityBadge(itemQuantity) {
         .addClass("badge-pill")
         .addClass("badge-light")
         .addClass("quantity")
+        .css("font-size", "0.9em")
         .text(itemQuantity);
 }
 
