@@ -209,6 +209,9 @@ function itemPagination(data) {
 
         paginationEntry.insertBefore($("#browse-items-next").parent());
     }
+
+    $("#current-page-display").text(data["page"]["current"]);
+    $("#last-page-display").text(data["page"]["last"]);
 }
 
 $("#nav-tabs").on("show.bs.tab", function(event) {
