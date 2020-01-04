@@ -6,3 +6,6 @@ Flask-WTF==0.14.2
 httplib2==0.10.3
 RtmAPI==0.7.0
 psycopg2==2.7.5
+
+bjsparser @ git+https://github.com/Auzzy/bjsparser.git8
+rdparser @ git+https://github.com/Auzzy/rdparser.git
