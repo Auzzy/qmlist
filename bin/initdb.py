@@ -1,3 +1,4 @@
+import argparse
 import datetime
 import os
 import sqlite3
@@ -42,8 +43,8 @@ def load_shopping_lists():
 
     model.db.session.commit()
 
-def load_inventory():
-    conn = sqlite3.connect(os.getenv("INVENTORY_DB_PATH"))
+def load_inventory(inventory_db_path):
+    conn = sqlite3.connect(inventory_db_path)
     cursor = conn.cursor()
 
     column_names = ["id", "name", "store", "parentid"]
@@ -65,9 +66,18 @@ def load_inventory():
         model.db.session.add(model.Product(**product_dict))
     model.db.session.commit()
 
+def parse_args():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("dbpath", help="The path to the inventory SQLite file.")
+
+    return vars(parser.parse_args())
+
 if __name__ == "__main__":
+    args = parse_args()
+
     model.db.create_all()
-    load_inventory()
+
+    load_inventory(args["dbpath"])
 
     create_departments()
     create_users()
