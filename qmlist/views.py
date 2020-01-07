@@ -83,7 +83,7 @@ def browse_stores():
     store_categories_query = _get_store_categories_query(current_category, store_name)
 
     store_categories_paginator = store_categories_query.order_by(model.Categories.name).paginate(page, CATEGORY_PAGE_SIZE, False)
-    store_categories_json = [{"name": category.name, "id": category.id, "hasChildren": bool(category.children)} for category in store_categories_paginator.items]
+    store_categories_json = [{"name": category.name, "id": category.id, "hasChildren": bool(category.children.count())} for category in store_categories_paginator.items]
     sorted_store_categories_json = list(sorted(store_categories_json, key=itemgetter("name")))
 
     page_json = {"current": store_categories_paginator.page}
