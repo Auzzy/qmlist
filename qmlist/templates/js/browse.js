@@ -188,7 +188,7 @@ function itemPagination(data) {
     var paginationWidth = 6;
     var startPage = Math.max(1, currentPage - Math.floor(paginationWidth / 2));
     var endPage = Math.min(data["page"]["last"], startPage + paginationWidth);
-    startPage -= paginationWidth - (endPage - startPage);
+    startPage = Math.max(1, endPage - paginationWidth);
     for (var pageno = startPage; pageno < endPage + 1; pageno++) {
         var paginationEntry = $("<li></li>")
             .addClass("page-item")
