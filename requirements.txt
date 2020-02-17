@@ -1,11 +1,11 @@
-Flask==1.0.0
+Flask==1.1.1
 Flask-Security==3.0.0
-Flask-SQLAlchemy==2.3.1
-Flask-WTF==0.14.2
+Flask-SQLAlchemy==2.4.1
+Flask-WTF==0.14.3
 
-httplib2==0.10.3
-RtmAPI==0.7.0
+httplib2==0.17.0
+RtmAPI==0.7.2
 psycopg2==2.7.5
 
-bjsparser @ git+https://github.com/Auzzy/bjsparser.git
-rdparser @ git+https://github.com/Auzzy/rdparser.git
+git+https://github.com/Auzzy/bjsparser.git@master
+git+https://github.com/Auzzy/rdparser.git@master
