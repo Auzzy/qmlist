@@ -1,7 +1,7 @@
 import argparse
 import datetime
+import json
 import os
-import sqlite3
 
 from qmlist import model, qmlist, views
 from qmlist.shoppinglist.rtm import rtmlib
@@ -43,32 +43,36 @@ def load_shopping_lists():
 
     model.db.session.commit()
 
-def load_inventory(inventory_db_path):
-    conn = sqlite3.connect(inventory_db_path)
-    cursor = conn.cursor()
+def _load_categories(category_paths, store_name):
+    categories = []
+    for category_path in category_paths:
+        parent = None
+        for category_name in category_path:
+            category = model.Categories.query.filter_by(name=category_name).one_or_none()
+            if not category:
+                category = model.Categories(name=category_name, store=store_name, parent=parent)
+                model.db.session.add(category)
+            parent = category
+        categories.append(category)
+    return categories
 
-    column_names = ["id", "name", "store", "parentid"]
-    cursor.execute("SELECT {} FROM categories".format(', '.join(column_names)))
-    all_categories = cursor.fetchall()
-    category_name_length = model.Categories.name.property.columns[0].type.length
-    for category in all_categories:
-        category_dict = dict(zip(column_names, category))
-        category_dict["name"] = category_dict["name"][:category_name_length]
-        model.db.session.add(model.Categories(**category_dict))
+def _load_store_inventory(inventory_filepath, store_name):
+    with open(inventory_filepath) as inventory_file:
+        inventory = json.load(inventory_file)
 
-    column_names = ["name", "categoryid", "url", "store", "stocked"]
-    cursor.execute("SELECT {} FROM products".format(", ".join(column_names)))
-    all_products = cursor.fetchall()
-    product_name_length = model.Product.name.property.columns[0].type.length
-    for product in all_products:
-        product_dict = dict(zip(column_names, product))
-        product_dict["name"] = product_dict["name"][:product_name_length]
-        model.db.session.add(model.Product(**product_dict))
-    model.db.session.commit()
+    for item in inventory["inventory"]:
+        categories = _load_categories(item["categories"], store_name)
+        category = categories[0] if categories else None
+        model.db.session.add(model.Product(name=item["name"], category=category, store=store_name))
+
+def load_inventory(bjs_inventory_filepath, rd_inventory_filepath):
+    _load_store_inventory(bjs_inventory_filepath, "BJs")
+    _load_store_inventory(rd_inventory_filepath, "Restaurant Depot")
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("dbpath", help="The path to the inventory SQLite file.")
+    parser.add_argument("bjs_inventory_filepath")
+    parser.add_argument("rd_inventory_filepath")
 
     return vars(parser.parse_args())
 
@@ -77,7 +81,7 @@ if __name__ == "__main__":
 
     model.db.create_all()
 
-    load_inventory(args["dbpath"])
+    load_inventory(args["bjs_inventory_filepath"], args["rd_inventory_filepath"])
 
     create_departments()
     create_users()
