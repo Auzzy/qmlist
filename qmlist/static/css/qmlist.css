@@ -34,3 +34,13 @@
 .arrow-disabled {
   border-color: transparent LightGray;
 }
+
+a[disabled] {
+    pointer-events: none;
+    cursor: default;
+}
+
+a.decr-btn[disabled] div {
+    color: white;
+    background-color: #e87c86;
+}
