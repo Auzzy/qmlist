@@ -1,5 +1,6 @@
-function decrButton(shoppingListName, itemName) {
+function decrButton(shoppingListName, itemName, itemQuantity) {
     return $("<button></button>")
+        .prop("disabled", itemQuantity <= 0)
         .addClass("btn")
         .addClass("badge")
         .addClass("badge-danger")
@@ -13,7 +14,7 @@ function decrButton(shoppingListName, itemName) {
                         decrBtn.parents(".quantity-section").children(".quantity").text(data["quantity"]);
                     } else {
                         decrBtn.parents(".quantity-section").children(".quantity").text(0);
-                        decrBtn.remove();
+                        decrBtn.prop("disabled", true);
                     }
                 })
                 .fail(function(jqXHR, textStatus) {
@@ -35,9 +36,7 @@ function incrButton(shoppingListName, itemName) {
                 .done(function(data) {
                     if (data["quantity"] > 0) {
                         incrBtn.parents(".quantity-section").children(".quantity").text(data["quantity"]);
-                        if (!incrBtn.parents(".quantity-section").children(".decr-btn").length) {
-                            incrBtn.parents(".quantity-section").prepend(decrButton(shoppingListName, itemName));
-                        }
+                        incrBtn.parents(".quantity-section").children(".decr-btn").prop("disabled", false);
                     }
                 })
                 .fail(function(jqXHR, textStatus) {
@@ -57,17 +56,9 @@ function quantityBadge(itemQuantity) {
 }
 
 function quantityButtons(shoppingListName, itemName, itemQuantity) {
-    var section = quantitySection(itemName, itemQuantity);
-
-    if (itemQuantity > 0) {
-        decrButton(shoppingListName, itemName).insertBefore(section.children());
-    }
-
-    return section.append(incrButton(shoppingListName, itemName));
-}
-
-function quantitySection(itemName, itemQuantity, ) {
     return $("<div></div>")
         .addClass("quantity-section")
-        .append(quantityBadge(itemQuantity));
+        .append(decrButton(shoppingListName, itemName, itemQuantity))
+        .append(quantityBadge(itemQuantity))
+        .append(incrButton(shoppingListName, itemName));
 }

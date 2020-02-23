@@ -26,7 +26,7 @@ function loadShoppingList(shoppingListName) {
                     if (data["editable"]) {
                         listItem.append(quantityButtons(shoppingListName, item["name"], item["quantity"]));
                     } else {
-                        listItem.append(quantitySection(item["name"], item["quantity"]));
+                        listItem.append($("<div></div>").append(quantityBadge(item["quantity"])));
                     }
 
                     $("#shopping-list").append(listItem);
