@@ -67,6 +67,8 @@ class Product(db.Model):
     url = db.Column(db.String(255))
     store = db.Column(db.String(255))
     stocked = db.Column(db.String(255))
+    price_min = db.Column(db.Numeric())
+    price_max = db.Column(db.Numeric())
 
 
 qmlist.user_datastore = SQLAlchemyUserDatastore(db, User, Role)
