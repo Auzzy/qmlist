@@ -63,6 +63,14 @@ function addChildCategory(childCategory) {
             }));
 }
 
+function itemPriceToString(price) {
+    if (price["max"] === price["min"]) {
+        return `$${price["max"]}`;
+    } else {
+        return `$${price["min"]} - $${price["max"]}`;
+    }
+}
+
 function layoutItems(pageno) {
     if (pageno === undefined || pageno === null) {
         pageno = $("#browse-items").attr("data-page");
@@ -81,26 +89,36 @@ function layoutItems(pageno) {
             $("#browse-items").empty();
 
             for (var index in data["store-items"]) {
+                var item = data["store-items"][index];
                 var itemElement = $("<li></li>")
                     .addClass("list-group-item")
                     .addClass("d-flex")
                     .addClass("justify-content-between")
                     .addClass("align-items-center")
-                    .attr("data-name", data["store-items"][index]["name"])
+                    .attr("data-name", item["name"])
                     .append($("<div></div>")
                         .addClass("text-truncate")
                         .attr("style", "max-width: 93%")
-                        .text(data["store-items"][index]["name"]));
+                        .text(item["name"]));
 
                 if ($("#shopping-list").attr("data-editable") === "true") {
                     var quantity = quantityButtons(
                         shoppingListName,
-                        data["store-items"][index]["name"],
-                        data["store-items"][index]["quantity"]);
+                        item["name"],
+                        item["quantity"]);
 
                     itemElement
-                        .attr("data-quantity", data["store-items"][index]["quantity"])
-                        .append(quantity);
+                        .attr("data-quantity", item["quantity"])
+                        .append($("<div></div>")
+                            .append($("<div></div>")
+                                .attr("style", "font-style: italic; float: left")
+                                .text(itemPriceToString(item["price"])))
+                            .append($("<div></div>")
+                                .attr("style", "float: left; width: 10px")
+                                .html("&nbsp;"))
+                            .append($("<div></div>")
+                                .attr("style", "float: left")
+                                .append(quantity)));
                 }
 
                 $("#browse-items").append(itemElement);
