@@ -113,7 +113,8 @@ def browse_items_page():
     store_items_json = []
     for product in store_products_paginator.items:
         item = shopping_list.get_item(product.name)
-        store_items_json.append({"name": item.name, "quantity": item.quantity})
+        price_dict = {"max": float(product.price_max), "min": float(product.price_min)}
+        store_items_json.append({"name": item.name, "quantity": item.quantity, "price": price_dict})
 
     page_json = {"last": store_products_paginator.pages, "current": store_products_paginator.page}
     if store_products_paginator.has_next:
