@@ -63,7 +63,12 @@ def _load_store_inventory(inventory_filepath, store_name):
     for item in inventory["inventory"]:
         categories = _load_categories(item["categories"], store_name)
         category = categories[0] if categories else None
-        model.db.session.add(model.Product(name=item["name"], category=category, store=store_name))
+        model.db.session.add(model.Product(
+            name=item["name"],
+            category=category,
+            store=store_name,
+            price_min=item["price"]["min"],
+            price_max=item["price"]["max"]))
 
 def load_inventory(bjs_inventory_filepath, rd_inventory_filepath):
     _load_store_inventory(bjs_inventory_filepath, "BJs")
