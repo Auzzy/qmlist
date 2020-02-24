@@ -52,7 +52,15 @@ def search():
             .limit(ITEM_PAGE_SIZE)
             .all())
 
-    page_result_dicts = [{"name": product.name, "quantity": shopping_list.get_item(product.name).quantity, "store": product.store} for product in page_results]
+    page_result_dicts = []
+    for product in page_results:
+        price_dict = {"max": float(product.price_max), "min": float(product.price_min)}
+        page_result_dicts.append({
+            "name": product.name,
+            "quantity": shopping_list.get_item(product.name).quantity,
+            "store": product.store,
+            "price": price_dict
+        })
     return jsonify({"search-results": page_result_dicts, "search-term": search_term, "total-results": all_results.count()})
 
 def _get_category_path(category):

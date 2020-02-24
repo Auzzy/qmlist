@@ -51,7 +51,16 @@ function search(shoppingListName, searchTerm, pageno) {
 
                     searchResult
                         .attr("data-quantity", result["quantity"])
-                        .append(quantity);
+                        .append($("<div></div>")
+                            .append($("<div></div>")
+                                .attr("style", "font-style: italic; float: left")
+                                .text(itemPriceToString(result["price"])))
+                            .append($("<div></div>")
+                                .attr("style", "float: left; width: 10px")
+                                .html("&nbsp;"))
+                            .append($("<div></div>")
+                                .attr("style", "float: left")
+                                .append(quantity)));
                 }
 
                 $('[data-toggle="tooltip"]').tooltip();
