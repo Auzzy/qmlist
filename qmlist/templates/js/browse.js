@@ -98,7 +98,7 @@ function layoutItems(pageno) {
                     .attr("data-name", item["name"])
                     .append($("<div></div>")
                         .addClass("text-truncate")
-                        .attr("style", "max-width: 93%")
+                        .attr("style", "max-width: 85%")
                         .text(item["name"]));
 
                 if ($("#shopping-list").attr("data-editable") === "true") {
