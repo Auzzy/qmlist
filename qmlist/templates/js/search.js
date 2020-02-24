@@ -27,11 +27,21 @@ function search(shoppingListName, searchTerm, pageno) {
                     .addClass("align-items-center")
                     .attr("data-name", result["name"])
                     .append($("<div></div>")
-                        .addClass("text-truncate")
-                        .attr("style", "max-width: 93%")
-                        .attr("data-toggle", "tooltip")
-                        .attr("title", result["name"])
-                        .text(result["name"]));
+                        .css({"max-width": "85%"})
+                        .append($("<div></div>")
+                            .css({"float": "left"})
+                            .addClass("text-truncate")
+                            .attr("data-toggle", "tooltip")
+                            .attr("title", result["name"])
+                            .text(result["name"]))
+                        .append($("<div></div>")
+                            .css({"width": "5px", "float": "left"})
+                            .html("&nbsp;"))
+                        .append($("<div></div>")
+                            .css({"float": "left"})
+                            .addClass("badge")
+                            .addClass(result["store"] === "BJs" ? "badge-danger" : "badge-primary")
+                            .text(result["store"])));
 
                 if ($("#shopping-list").attr("data-editable") === "true") {
                     var quantity = quantityButtons(
