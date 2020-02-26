@@ -5,7 +5,7 @@ from operator import attrgetter, itemgetter
 
 from flask import jsonify, render_template, request
 from flask_login import logout_user
-from flask_security import current_user, login_required
+from flask_security import current_user, login_required, roles_required
 from sqlalchemy import func
 
 from qmlist import model, qmlist
@@ -25,8 +25,9 @@ def get_shopping_list(name):
 
     if current_user.id not in _SHOPPING_LISTS[name]:
         shopping_list_db = model.ShoppingList.query.filter_by(name=name).one()
+        tags = [current_user.department.tag] if current_user.department and current_user.department.tag else []
         _SHOPPING_LISTS[name][current_user.id] = shoppinglist.PersistentShoppingList.load(
-            name, shopping_list_db.rtmid, shopping_list_db.departure, [current_user.department.tag])
+            name, shopping_list_db.rtmid, shopping_list_db.departure, tags)
     return _SHOPPING_LISTS[name][current_user.id]
 
 @app.route("/")

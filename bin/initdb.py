@@ -20,6 +20,12 @@ def _load_from_rtm():
     return next_lists
 
 
+def create_roles():
+    model.db.session.add(model.Role(name="user", description="A regular user. This is the default role."))
+    model.db.session.add(model.Role(name="admin", description="User with access to change the system."))
+
+    model.db.session.commit()
+
 def create_departments():
     model.db.session.add(model.Department(name="Test", tag="foo"))
     model.db.session.add(model.Department(name="HQ", tag="hq"))
@@ -29,9 +35,14 @@ def create_departments():
 def create_users():
     user1 = qmlist.user_datastore.create_user(email='foo@netscape.net', password='password')
     user1.departmentid = model.Department.query.filter_by(name="Test").one().id
+    user1.roles.append(model.Role.query.filter_by(name="user").one())
 
     user2 = qmlist.user_datastore.create_user(email='bar@netscape.net', password='password')
     user2.departmentid = model.Department.query.filter_by(name="HQ").one().id
+    user2.roles.append(model.Role.query.filter_by(name="user").one())
+
+    admin = qmlist.user_datastore.create_user(email=os.environ["ADMIN_USER"], password=os.environ["ADMIN_PASSWORD"])
+    admin.roles.append(model.Role.query.filter_by(name="admin").one())
 
     model.db.session.commit()
 
@@ -88,6 +99,7 @@ if __name__ == "__main__":
 
     load_inventory(args["bjs_inventory_filepath"], args["rd_inventory_filepath"])
 
+    create_roles()
     create_departments()
     create_users()
     load_shopping_lists()
