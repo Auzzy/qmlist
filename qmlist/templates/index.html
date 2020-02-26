@@ -23,6 +23,11 @@
                 {%- endfor %}
             </div>
         </li>
+        {% if is_admin -%}
+        <li class="nav-item ml-auto">
+            <a class="nav-link" id="admin-console-tab" data-toggle="tab" href="#admin-console" role="tab" aria-controls="admin-console" aria-selected="false">Admin Console</a>
+        </li>
+        {%- endif %}
         <li class="nav-item ml-auto">
             <a class="btn btn-outline-dark" href="{{ url_for('security.logout') }}">Logout</a>
         </li>
@@ -37,6 +42,11 @@
         <div class="tab-pane" id="list" role="tabpanel" aria-labelledby="list-tab">
             {% include "tabs/shopping-list-tab.html" %}
         </div>
+        {% if is_admin -%}
+        <div class="tab-pane" id="admin-console" role="tabpanel" aria-labelledby="admin-console-tab">
+            {% include "tabs/admin-console-tab.html" %}
+        </div>
+        {%- endif %}
     </div>
 </div>
 {% endblock %}
