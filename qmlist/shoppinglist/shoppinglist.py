@@ -8,7 +8,7 @@ class PersistentShoppingList(object):
     def load(name, id, departure, tags=[], client=None):
         client = client or rtmlib.connect()
         
-        items = [Item.load(client, rtm_item) for rtm_item in rtmlib.load_list_items(client, id) if rtm_item["tags"] == tags]
+        items = [Item.load(client, rtm_item) for rtm_item in rtmlib.load_list_items(client, id) if not tags or rtm_item["tags"] == tags]
         return PersistentShoppingList(id, name, items, departure, tags, client)
 
     def __init__(self, id, name, items, departure, tags, client):
