@@ -175,3 +175,15 @@ def increment_item_count():
 @roles_required("admin")
 def admin_console_home():
     pass
+
+@app.route("/admin/lists/get")
+@login_required
+@roles_required("admin")
+def get_list_info():
+    list_info = []
+    for shopping_list in model.ShoppingList.query.all():
+        list_info.append({
+            "name": shopping_list.name,
+            "departure": shopping_list.departure
+        })
+    return jsonify({"lists": list_info})
