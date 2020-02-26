@@ -35,7 +35,7 @@ def get_shopping_list(name):
 def home():
     shopping_list_names = [shopping_list.name for shopping_list in model.ShoppingList.query.order_by(model.ShoppingList.departure).all()]
     default_list_name = model.ShoppingList.next().name
-    return render_template('index.html', default_list_name=default_list_name, shopping_list_names=shopping_list_names)
+    return render_template('index.html', default_list_name=default_list_name, shopping_list_names=shopping_list_names, is_admin=current_user.has_role("admin"))
 
 @app.route("/search")
 @login_required
@@ -169,3 +169,9 @@ def increment_item_count():
         quantity = shopping_list.increment_item(item_name)
 
     return jsonify({"quantity": quantity})
+
+@app.route("/admin")
+@login_required
+@roles_required("admin")
+def admin_console_home():
+    pass
