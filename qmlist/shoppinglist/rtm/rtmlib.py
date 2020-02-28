@@ -111,7 +111,7 @@ def remove_from_list(rtm_client, list_id, taskseries_id, task_id):
 
 def create_list(rtm_client, name):
     timeline = rtm_client.rtm.timelines.create().timeline.value
-    new_list = client.rtm.lists.add(timeline=timeline, name=name).list
+    new_list = rtm_client.rtm.lists.add(timeline=timeline, name=name).list
     return new_list
 
 def get_or_create_list_id(rtm_client, name):

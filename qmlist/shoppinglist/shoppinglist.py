@@ -11,6 +11,14 @@ class PersistentShoppingList(object):
         items = [Item.load(client, rtm_item) for rtm_item in rtmlib.load_list_items(client, id) if not tags or rtm_item["tags"] == tags]
         return PersistentShoppingList(id, name, items, departure, tags, client)
 
+    @staticmethod
+    def create(name, departure, tags=[], client=None):
+        client = client or rtmlib.connect()
+
+        new_list = rtmlib.create_list(client, name)
+
+        return PersistentShoppingList(new_list.id, name, [], departure, tags, client)
+
     def __init__(self, id, name, items, departure, tags, client):
         self._id = id
         self.departure = departure
