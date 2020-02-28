@@ -21,3 +21,30 @@ $("#admin-console-lists-tab, #admin-console-tab").on("show.bs.tab", function() {
             adminConsoleDisplayLists(data["lists"]);
         });
 });
+
+$("#new-list-button").click(function() {
+    $("#create-list-form").css("display", "block");
+    $("#create-list-name").val("");
+    $("#create-list-datepicker").val("");
+});
+
+$("#create-list-cancel").click(function() {
+    $("#create-list-form").css("display", "none");
+    $("#create-list-name").val("");
+    $("#create-list-datepicker").val("");
+});
+
+$("#create-list-submit").click(function() {
+    $.post("{{ url_for('create_new_list') }}", {name: $("#create-list-name").val(), date: $("#create-list-datepicker").val()})
+        .done(function(data) {
+            adminConsoleDisplayLists(data["lists"]);
+            $("#create-list-form").css("display", "none");
+            $("#create-list-name").val("");
+            $("#create-list-datepicker").val("");
+        });
+});
+
+$("#create-list-datepicker").datepicker({
+    changeMonth: true,
+    changeYear: true
+});

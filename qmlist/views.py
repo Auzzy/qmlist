@@ -184,6 +184,22 @@ def get_list_info():
     for shopping_list in model.ShoppingList.query.all():
         list_info.append({
             "name": shopping_list.name,
-            "departure": shopping_list.departure
+            "departure": shopping_list.departure.strftime("%m/%d/%Y")
         })
     return jsonify({"lists": list_info})
+
+@app.route("/admin/lists/create", methods=["POST"])
+@login_required
+@roles_required("admin")
+def create_new_list():
+    name = request.form["name"]
+    date = datetime.datetime.strptime(request.form["date"], "%m/%d/%Y")
+    if name not in _SHOPPING_LISTS:
+        _SHOPPING_LISTS[name] = {}
+
+    if current_user.id not in _SHOPPING_LISTS[name]:
+        _SHOPPING_LISTS[name][current_user.id] = shoppinglist.PersistentShoppingList.create(name, date)
+        model.db.session.add(model.ShoppingList(name=name, rtmid=_SHOPPING_LISTS[name][current_user.id]._id, departure=date))
+        model.db.session.commit()
+
+    return get_list_info()
