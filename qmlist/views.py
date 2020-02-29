@@ -195,11 +195,14 @@ def get_list_info():
 def create_new_list():
     name = request.form["name"]
     date = datetime.datetime.strptime(request.form["date"], DEPARTURE_FORMAT)
+
     if name not in _SHOPPING_LISTS:
         _SHOPPING_LISTS[name] = {}
 
     if current_user.id not in _SHOPPING_LISTS[name]:
-        _SHOPPING_LISTS[name][current_user.id] = shoppinglist.PersistentShoppingList.create(name, date)
+        _SHOPPING_LISTS[name][current_user.id] = shoppinglist.PersistentShoppingList.get(name, date)
+        if not _SHOPPING_LISTS[name][current_user.id]:
+            _SHOPPING_LISTS[name][current_user.id]= shoppinglist.PersistentShoppingList.create(name, date)
         model.db.session.add(model.ShoppingList(name=name, rtmid=_SHOPPING_LISTS[name][current_user.id]._id, departure=date))
         model.db.session.commit()
 

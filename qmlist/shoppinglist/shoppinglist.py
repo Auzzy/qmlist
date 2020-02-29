@@ -12,6 +12,16 @@ class PersistentShoppingList(object):
         return PersistentShoppingList(id, name, items, departure, tags, client)
 
     @staticmethod
+    def get(name, departure, client=None):
+        client = client or rtmlib.connect()
+
+        list_ids = rtmlib.get_list_ids(client, name)
+        if list_ids:
+            return PersistentShoppingList.load(name, list_ids[0], departure, client=client)
+        else:
+            return None
+
+    @staticmethod
     def create(name, departure, tags=[], client=None):
         client = client or rtmlib.connect()
 
