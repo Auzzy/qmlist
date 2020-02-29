@@ -44,7 +44,10 @@ $("#create-list-submit").click(function() {
         });
 });
 
-$("#create-list-datepicker").datepicker({
-    changeMonth: true,
-    changeYear: true
+$("#create-list-datepicker").bootstrapMaterialDatePicker({
+    format: 'ddd DD-MMM-YYYY HH:mm',
+    switchOnClick: true
 });
+// Since switchOnClick is true, we don't need the OK or Cancel buttons.
+$(".dtp .dtp-btn-ok").addClass("hidden");
+$(".dtp .dtp-btn-cancel").addClass("hidden");
