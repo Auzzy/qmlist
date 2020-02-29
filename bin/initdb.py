@@ -7,19 +7,6 @@ from qmlist import model, qmlist, views
 from qmlist.shoppinglist.rtm import rtmlib
 
 
-def _load_from_rtm():
-    client = rtmlib.connect()
-
-    next_lists = []
-    for list in rtmlib.get_current_lists(client):
-        if list["name"].startswith("QMList"):
-            name, departure_str = list["name"].split(" -- ")
-            name = name[len("QMList"):].strip()
-            departure = datetime.datetime.strptime(departure_str, "%d-%m-%y %H:%M")
-            next_lists.append({"name": name, "departure": departure, "id": list["id"]})
-    return next_lists
-
-
 def create_roles():
     model.db.session.add(model.Role(name="user", description="A regular user. This is the default role."))
     model.db.session.add(model.Role(name="admin", description="User with access to change the system."))
@@ -43,14 +30,6 @@ def create_users():
 
     admin = qmlist.user_datastore.create_user(email=os.environ["ADMIN_USER"], password=os.environ["ADMIN_PASSWORD"])
     admin.roles.append(model.Role.query.filter_by(name="admin").one())
-
-    model.db.session.commit()
-
-def load_shopping_lists():
-    next_lists = _load_from_rtm()
-    for list in next_lists:
-        if not model.ShoppingList.query.filter_by(rtmid=list["id"]).first():
-            model.db.session.add(model.ShoppingList(name=list["name"], rtmid=list["id"], departure=list["departure"]))
 
     model.db.session.commit()
 
@@ -102,4 +81,3 @@ if __name__ == "__main__":
     create_roles()
     create_departments()
     create_users()
-    load_shopping_lists()
