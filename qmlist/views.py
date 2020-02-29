@@ -16,6 +16,7 @@ from qmlist.shoppinglist import shoppinglist
 ITEM_PAGE_SIZE = 100
 _SHOPPING_LISTS = {}
 ALL_CATEGORY = "All"
+DEPARTURE_FORMAT = "%a %d-%b-%Y %H:%M"
 
 def get_shopping_list(name):
     global _SHOPPING_LISTS
@@ -184,7 +185,7 @@ def get_list_info():
     for shopping_list in model.ShoppingList.query.all():
         list_info.append({
             "name": shopping_list.name,
-            "departure": shopping_list.departure.strftime("%m/%d/%Y")
+            "departure": shopping_list.departure.strftime(DEPARTURE_FORMAT)
         })
     return jsonify({"lists": list_info})
 
@@ -193,7 +194,7 @@ def get_list_info():
 @roles_required("admin")
 def create_new_list():
     name = request.form["name"]
-    date = datetime.datetime.strptime(request.form["date"], "%m/%d/%Y")
+    date = datetime.datetime.strptime(request.form["date"], DEPARTURE_FORMAT)
     if name not in _SHOPPING_LISTS:
         _SHOPPING_LISTS[name] = {}
 

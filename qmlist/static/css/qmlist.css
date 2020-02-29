@@ -44,3 +44,11 @@ a.decr-btn[disabled] div {
     color: white;
     background-color: #e87c86;
 }
+
+/* For the datetime picker */
+.dtp .btn {
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+    border: 1px solid transparent;
+}
