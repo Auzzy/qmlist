@@ -222,3 +222,21 @@ def update_departure():
     model.db.session.commit()
 
     return jsonify({"departure": departure_str})
+
+@app.route("/admin/lists/name", methods=["POST"])
+@login_required
+@roles_required("admin")
+def update_name():
+    shopping_list_name = request.form["shopping_list"]
+    new_name = request.form["name"]
+
+    # Update name in database
+    model.ShoppingList.query.filter_by(name=shopping_list_name).update(
+        {"name": new_name})
+    model.db.session.commit()
+
+    # Update name in memory and RtM
+    shopping_list = get_shopping_list(shopping_list_name)
+    shopping_list.name = new_name
+
+    return jsonify({"name": new_name})

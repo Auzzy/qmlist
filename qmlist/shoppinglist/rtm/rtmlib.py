@@ -132,6 +132,10 @@ def load_list_items(rtm_client, list_id):
 
     return [_item_as_dict(taskseries, list_id) for list in tasks for taskseries in list]
 
+def rename_list(rtm_client, list_id, new_name):
+    timeline = rtm_client.rtm.timelines.create().timeline.value
+    rtm_client.rtm.lists.setName(timeline=timeline, list_id=str(list_id), name=new_name)
+
 def _item_as_dict(taskseries, list_id):
     return {
         "id": taskseries.id,
