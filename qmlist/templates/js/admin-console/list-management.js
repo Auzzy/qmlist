@@ -38,6 +38,7 @@ $("#create-list-submit").click(function() {
     $.post("{{ url_for('create_new_list') }}", {name: $("#create-list-name").val(), date: $("#create-list-datepicker").val()})
         .done(function(data) {
             adminConsoleDisplayLists(data["lists"]);
+            loadShoppingListTab($("#create-list-name").val());
             $("#create-list-form").css("display", "none");
             $("#create-list-name").val("");
             $("#create-list-datepicker").val("");
