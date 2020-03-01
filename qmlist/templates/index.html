@@ -15,13 +15,9 @@
         <li class="nav-item">
             <a class="nav-link" id="list-tab" data-toggle="tab" href="#list" role="tab" aria-controls="list" aria-selected="false">List</a>
         </li>
-        <li class="nav-item dropdown">
+        <li class="nav-item dropdown" id="load-list-dropdown">
             <a class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true" aria-expanded="false">Load Shopping List</a>
-            <div class="dropdown-menu" id="shopping-list-picker">
-                {%- for name in shopping_list_names %}
-                <a class="dropdown-item" data-name="{{ name }}" href="#">{{ name }}</a>
-                {%- endfor %}
-            </div>
+            <div class="dropdown-menu" id="shopping-list-picker"></div>
         </li>
         {% if is_admin -%}
         <li class="nav-item ml-auto">
