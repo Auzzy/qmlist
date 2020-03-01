@@ -14,6 +14,20 @@ function loadShoppingListTab(shoppingListName) {
     }
 }
 
-$("#shopping-list-picker > .dropdown-item").click(function() {
-    loadShoppingListTab($(this).attr("data-name"));
+$("#load-list-dropdown").on("show.bs.dropdown", function() {
+    $.get("{{ url_for('get_list_info') }}")
+        .done(function(data) {
+            $("#shopping-list-picker").empty();
+            data["lists"].forEach(list_info => {
+                $("#shopping-list-picker")
+                    .append($("<a></a>")
+                        .addClass("dropdown-item")
+                        .attr("data-name", list_info["name"])
+                        .attr("href", "#")
+                        .text(list_info["name"])
+                        .click(function() {
+                            loadShoppingListTab($(this).attr("data-name"));
+                        }));
+            });
+        });
 });
