@@ -34,11 +34,20 @@ class PersistentShoppingList(object):
         self.departure = departure
         self.tags = tags
         self.items = {item.name: item for item in items}
-        self.name = name
+        self._name = name
 
         self._to_delete = []
         self._to_add = []
         self._client = client or rtmlib.connect()
+
+    @property
+    def name(self):
+        return self._name
+
+    @name.setter
+    def name(self, value):
+        rtmlib.rename_list(self._client, self._id, value)
+        self._name = value
 
     def get_item(self, name):
         return self.items.get(name) if name in self.items else NewItem(self._client, self._id, name, self.tags)

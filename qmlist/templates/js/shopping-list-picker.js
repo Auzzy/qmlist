@@ -1,8 +1,12 @@
-function loadShoppingListTab(shoppingListName) {
+function setListTabName(shoppingListName) {
     $("#list-tab").attr("data-list-name", shoppingListName);
     if (shoppingListName !== undefined) {
         $("#list-tab").text("List - " + shoppingListName);
     }
+}
+
+function loadShoppingListTab(shoppingListName) {
+    setListTabName(shoppingListName);
 
     loadShoppingList(shoppingListName);
 
