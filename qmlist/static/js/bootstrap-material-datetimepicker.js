@@ -62,11 +62,13 @@
 
 			this.initButtons();
 
+			let triggerEvent = this.params.triggerEvent !== undefined ? this.params.triggerEvent : "focus";
+
 			this._attachEvent($(window), 'resize', this._centerBox.bind(this));
 			this._attachEvent(this.$dtpElement.find('.dtp-content'), 'click', this._onElementClick.bind(this));
 			this._attachEvent(this.$dtpElement, 'click', this._onBackgroundClick.bind(this));
 			this._attachEvent(this.$dtpElement.find('.dtp-close > a'), 'click', this._onCloseClick.bind(this));
-			this._attachEvent(this.$element, 'focus', this._onFocus.bind(this));
+			this._attachEvent(this.$element, triggerEvent, this._onFocus.bind(this));
 		},
 		initDays: function()
 		{
@@ -904,6 +906,7 @@
 		{
 			e.stopPropagation();
 			this.hide();
+			this.$element.trigger('close');
 		},
 		_onElementClick: function(e)
 		{
@@ -919,6 +922,7 @@
 		_onCloseClick: function()
 		{
 			this.hide();
+			this.$element.trigger('close');
 		},
 		_onClearClick: function()
 		{

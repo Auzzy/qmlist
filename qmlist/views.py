@@ -209,3 +209,16 @@ def create_new_list():
         model.db.session.commit()
 
     return get_list_info()
+
+@app.route("/admin/lists/departure", methods=["POST"])
+@login_required
+@roles_required("admin")
+def update_departure():
+    shopping_list_name = request.form["shopping_list"]
+    departure_str = request.form["departure"]
+
+    model.ShoppingList.query.filter_by(name=shopping_list_name).update(
+        {"departure": datetime.datetime.strptime(departure_str, DEPARTURE_FORMAT)})
+    model.db.session.commit()
+
+    return jsonify({"departure": departure_str})
