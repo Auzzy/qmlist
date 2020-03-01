@@ -34,18 +34,16 @@ def get_shopping_list(name):
 @app.route("/")
 @login_required
 def home():
-    shopping_list_names = [shopping_list.name for shopping_list in model.ShoppingList.query.order_by(model.ShoppingList.departure).all()]
-    default_list_name = model.ShoppingList.next().name
-    return render_template('index.html', default_list_name=default_list_name, shopping_list_names=shopping_list_names, is_admin=current_user.has_role("admin"))
+    default_list = model.ShoppingList.next()
+    default_list_name = default_list.name if default_list else None
+    return render_template('index.html', default_list_name=default_list_name, is_admin=current_user.has_role("admin"))
 
 @app.route("/search")
 @login_required
 def search():
-    shopping_list_name = request.args["shopping-list"]
+    shopping_list_name = request.args.get("shopping-list")
     search_term = request.args["search"]
     pageno = int(request.args["pageno"])
-
-    shopping_list = get_shopping_list(shopping_list_name)
 
     all_results = model.Product.query.filter(func.lower(model.Product.name).contains(search_term.lower()))
     page_results = (all_results
@@ -54,12 +52,13 @@ def search():
             .limit(ITEM_PAGE_SIZE)
             .all())
 
+    shopping_list = get_shopping_list(shopping_list_name) if shopping_list_name else None
     page_result_dicts = []
     for product in page_results:
         price_dict = {"max": float(product.price_max), "min": float(product.price_min)}
         page_result_dicts.append({
             "name": product.name,
-            "quantity": shopping_list.get_item(product.name).quantity,
+            "quantity": shopping_list.get_item(product.name).quantity if shopping_list else None,
             "store": product.store,
             "price": price_dict
         })
@@ -103,13 +102,11 @@ def _get_subcategories(category):
 @app.route("/browse/items/")
 @login_required
 def browse_items_page():
-    shopping_list_name = request.args["shopping-list"]
+    shopping_list_name = request.args.get("shopping-list")
     store_name = request.args["store-name"]
     category_name = request.args.get("category", ALL_CATEGORY)
     page = int(request.args["pageno"])
     item_count = int(request.args["item-count"])
-
-    shopping_list = get_shopping_list(shopping_list_name)
 
     store_products_query = model.Product.query.filter_by(store=store_name)
     if category_name != ALL_CATEGORY:
@@ -120,11 +117,16 @@ def browse_items_page():
 
     store_products_paginator = store_products_query.order_by(model.Product.name).paginate(page, item_count, False)
 
+    shopping_list = get_shopping_list(shopping_list_name) if shopping_list_name else None
     store_items_json = []
     for product in store_products_paginator.items:
-        item = shopping_list.get_item(product.name)
         price_dict = {"max": float(product.price_max), "min": float(product.price_min)}
-        store_items_json.append({"name": item.name, "quantity": item.quantity, "price": price_dict})
+        item = shopping_list.get_item(product.name) if shopping_list else None
+        store_items_json.append({
+            "name": item.name if item else product.name,
+            "quantity": item.quantity if item else None,
+            "price": price_dict
+        })
 
     page_json = {"last": store_products_paginator.pages, "current": store_products_paginator.page}
     if store_products_paginator.has_next:

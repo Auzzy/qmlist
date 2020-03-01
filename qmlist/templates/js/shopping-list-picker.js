@@ -1,6 +1,8 @@
 function loadShoppingListTab(shoppingListName) {
     $("#list-tab").attr("data-list-name", shoppingListName);
-    $("#list-tab").text("List - " + shoppingListName);
+    if (shoppingListName !== undefined) {
+        $("#list-tab").text("List - " + shoppingListName);
+    }
 
     loadShoppingList(shoppingListName);
 
