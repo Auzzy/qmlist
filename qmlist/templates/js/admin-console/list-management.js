@@ -71,11 +71,11 @@ function adminConsoleDisplayLists(lists) {
                 .append($("<div></div>"))
                 .append($("<div></div>")
                     .append($("<a></a>")
+                        .css("float", "left")
                         .attr("href", "#")
                         .append($("<i></i>")
                             .addClass("fa")
                             .addClass("fa-edit")
-                            .css("float", "left")
                             .css("margin-right", "5px"))
                         .click(function() {
                             $("#edit-list-datepicker").bootstrapMaterialDatePicker("setDate", list_info["departure"]);
@@ -85,7 +85,37 @@ function adminConsoleDisplayLists(lists) {
                     .append($("<div></div>")
                         .css("font-style", "italic")
                         .css("float", "left")
-                        .text(list_info["departure"]))));
+                        .text(list_info["departure"]))
+                    .append($("<a></a>")
+                        .css("float", "left")
+                        .attr("href", "#")
+                        .append($("<i></i>")
+                            .addClass("fa")
+                            .addClass("fa-trash")
+                            .addClass("fa-lg")
+                            .css("margin-left", "15px")
+                            .css("color", "red"))
+                        .click(function() {
+                            bootbox.confirm({
+                                message: `Are you sure you want to delete the shopping list "${list_info["name"]}"?`,
+                                buttons: {
+                                    confirm: {label: `Delete "${list_info["name"]}"`, className: 'btn-success'},
+                                    cancel: {label: 'Cancel', className: 'btn-outline-danger'}
+                                },
+                                callback: function (result) {
+                                    if (result) {
+                                        $.ajax({method: "DELETE", url: "{{ url_for('delete_list') }}", data: {shopping_list: list_info["name"]}})
+                                            .done(function(data) {
+                                                adminConsoleDisplayLists(data["lists"]);
+                                                if ($("#list-tab").attr("data-list-name") === list_info["name"]) {
+                                                    console.log(data["load"]);
+                                                    loadShoppingListTab(data["load"]);
+                                                }
+                                            });
+                                    }
+                                }
+                            });
+                        }))));
 
         adminConsoleDisplayListName(list_info["name"]);
     });

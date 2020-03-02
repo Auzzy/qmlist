@@ -1,6 +1,8 @@
 function setListTabName(shoppingListName) {
     $("#list-tab").attr("data-list-name", shoppingListName);
-    if (shoppingListName !== undefined) {
+    if (shoppingListName === undefined || shoppingListName === null) {
+        $("#list-tab").text("List");
+    } else {
         $("#list-tab").text("List - " + shoppingListName);
     }
 }

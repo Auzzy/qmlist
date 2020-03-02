@@ -72,6 +72,19 @@ class PersistentShoppingList(object):
     def is_editable(self):
         return self.departure >= datetime.datetime.now()
 
+    def delete(self):
+        rtmlib.delete_list(self._client, self._id)
+
+        # Intentionally omitting the name, so which list was deleted can be
+        # determined if needed.
+        self._id = None
+        self.departure = None
+        self.tags = []
+        self.items = {}
+        self._to_delete = []
+        self._to_add = []
+        self._client = None
+
 class _ItemBase(object):
     def __init__(self, name, tags, quantity=0):
         self.name = name

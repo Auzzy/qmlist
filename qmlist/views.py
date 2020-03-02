@@ -31,6 +31,10 @@ def get_shopping_list(name):
             name, shopping_list_db.rtmid, shopping_list_db.departure, tags)
     return _SHOPPING_LISTS[name][current_user.id]
 
+def delete_shopping_list(name):
+    if name in _SHOPPING_LISTS:
+        del _SHOPPING_LISTS[name]
+
 @app.route("/")
 @login_required
 def home():
@@ -179,17 +183,20 @@ def increment_item_count():
 def admin_console_home():
     pass
 
-@app.route("/admin/lists/get")
-@login_required
-@roles_required("admin")
-def get_list_info():
+def _get_list_info_raw():
     list_info = []
     for shopping_list in model.ShoppingList.query.all():
         list_info.append({
             "name": shopping_list.name,
             "departure": shopping_list.departure.strftime(DEPARTURE_FORMAT)
         })
-    return jsonify({"lists": list_info})
+    return list_info
+
+@app.route("/admin/lists/get")
+@login_required
+@roles_required("admin")
+def get_list_info():
+    return jsonify({"lists": _get_list_info_raw()})
 
 @app.route("/admin/lists/create", methods=["POST"])
 @login_required
@@ -209,6 +216,26 @@ def create_new_list():
         model.db.session.commit()
 
     return get_list_info()
+
+@app.route("/admin/lists/delete", methods=["DELETE"])
+@login_required
+@roles_required("admin")
+def delete_list():
+    shopping_list_name = request.form["shopping_list"]
+
+    # Delete from database
+    model.db.session.delete(model.ShoppingList.query.filter_by(name=shopping_list_name).one())
+    model.db.session.commit()
+
+    # Delete from RtM
+    shopping_list = get_shopping_list(shopping_list_name)
+    shopping_list.delete()
+
+    # Remove from memory
+    delete_shopping_list(shopping_list.name)
+
+    next_list = model.ShoppingList.next()
+    return jsonify({"lists": _get_list_info_raw(), "load": next_list.name if next_list else None})
 
 @app.route("/admin/lists/departure", methods=["POST"])
 @login_required
