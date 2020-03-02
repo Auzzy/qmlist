@@ -1,5 +1,5 @@
 function loadShoppingList(shoppingListName) {
-    if (shoppingListName === undefined) {
+    if (shoppingListName === undefined || shoppingListName === null) {
         $("#list-tab").addClass("disabled");
     } else {
         $("#list-tab").removeClass("disabled");
