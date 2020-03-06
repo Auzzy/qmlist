@@ -25,7 +25,7 @@ def get_shopping_list(name):
         _SHOPPING_LISTS[name] = {}
 
     if current_user.id not in _SHOPPING_LISTS[name]:
-        shopping_list_db = model.ShoppingList.query.filter_by(name=name).one()
+        shopping_list_db = model.ShoppingList.active().filter_by(name=name).one()
         tags = [current_user.department.tag] if current_user.department and current_user.department.tag else []
         _SHOPPING_LISTS[name][current_user.id] = shoppinglist.PersistentShoppingList.load(
             name, shopping_list_db.rtmid, shopping_list_db.departure, tags)
@@ -183,9 +183,16 @@ def increment_item_count():
 def admin_console_home():
     pass
 
-def _get_list_info_raw():
+def _get_list_info_raw(archived=None):
+    if archived is None:
+        table = model.ShoppingList.query
+    elif archived:
+        table = model.ShoppingList.archived()
+    else:
+        table = model.ShoppingList.active()
+
     list_info = []
-    for shopping_list in model.ShoppingList.query.all():
+    for shopping_list in table.all():
         list_info.append({
             "name": shopping_list.name,
             "departure": shopping_list.departure.strftime(DEPARTURE_FORMAT)
@@ -196,7 +203,19 @@ def _get_list_info_raw():
 @login_required
 @roles_required("admin")
 def get_list_info():
-    return jsonify({"lists": _get_list_info_raw()})
+    return jsonify({"lists": _get_list_info_raw(None)})
+
+@app.route("/admin/lists/get/archived")
+@login_required
+@roles_required("admin")
+def get_archived_list_info():
+    return jsonify({"lists": _get_list_info_raw(True)})
+
+@app.route("/admin/lists/get/active")
+@login_required
+@roles_required("admin")
+def get_active_list_info():
+    return jsonify({"lists": _get_list_info_raw(False)})
 
 @app.route("/admin/lists/create", methods=["POST"])
 @login_required
@@ -215,7 +234,7 @@ def create_new_list():
         model.db.session.add(model.ShoppingList(name=name, rtmid=_SHOPPING_LISTS[name][current_user.id]._id, departure=date))
         model.db.session.commit()
 
-    return get_list_info()
+    return jsonify({"lists": _get_list_info_raw(False)})
 
 @app.route("/admin/lists/delete", methods=["DELETE"])
 @login_required
@@ -237,6 +256,29 @@ def delete_list():
     next_list = model.ShoppingList.next()
     return jsonify({"lists": _get_list_info_raw(), "load": next_list.name if next_list else None})
 
+@app.route("/admin/lists/archive", methods=["POST"])
+@login_required
+@roles_required("admin")
+def archive_list():
+    shopping_list_name = request.form["shopping_list"]
+
+    model.ShoppingList.active().filter_by(name=shopping_list_name).one().isarchived = True
+    model.db.session.commit()
+
+    next_list = model.ShoppingList.next()
+    return jsonify({"lists": _get_list_info_raw(False), "load": next_list.name if next_list else None})
+
+@app.route("/admin/lists/unarchive", methods=["POST"])
+@login_required
+@roles_required("admin")
+def unarchive_list():
+    shopping_list_name = request.form["shopping_list"]
+
+    model.ShoppingList.archived().filter_by(name=shopping_list_name).one().isarchived = False
+    model.db.session.commit()
+
+    return jsonify({"lists": _get_list_info_raw(True)})
+
 @app.route("/admin/lists/departure", methods=["POST"])
 @login_required
 @roles_required("admin")
@@ -244,8 +286,8 @@ def update_departure():
     shopping_list_name = request.form["shopping_list"]
     departure_str = request.form["departure"]
 
-    model.ShoppingList.query.filter_by(name=shopping_list_name).update(
-        {"departure": datetime.datetime.strptime(departure_str, DEPARTURE_FORMAT)})
+    new_departure = datetime.datetime.strptime(departure_str, DEPARTURE_FORMAT)
+    model.ShoppingList.active().filter_by(name=shopping_list_name).one().departure = new_departure
     model.db.session.commit()
 
     return jsonify({"departure": departure_str})
@@ -258,8 +300,7 @@ def update_name():
     new_name = request.form["name"]
 
     # Update name in database
-    model.ShoppingList.query.filter_by(name=shopping_list_name).update(
-        {"name": new_name})
+    model.ShoppingList.active().filter_by(name=shopping_list_name).one().name = new_name
     model.db.session.commit()
 
     # Update name in memory and RtM
