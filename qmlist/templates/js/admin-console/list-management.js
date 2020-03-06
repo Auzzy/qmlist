@@ -86,6 +86,11 @@ function adminConsoleDisplayLists(lists) {
                         .css("font-style", "italic")
                         .css("float", "left")
                         .text(list_info["departure"]))
+                    // Use a spacer rather than margin so the gap is unclickable
+                    .append($("<div></div>")
+                        .css("float", "left")
+                        .css("width", "10px")
+                        .html("&nbsp;"))
                     .append($("<a></a>")
                         .css("float", "left")
                         .attr("href", "#")
@@ -93,7 +98,6 @@ function adminConsoleDisplayLists(lists) {
                             .addClass("fa")
                             .addClass("fa-trash")
                             .addClass("fa-lg")
-                            .css("margin-left", "15px")
                             .css("color", "red"))
                         .click(function() {
                             bootbox.confirm({
