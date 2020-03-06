@@ -2,9 +2,15 @@
     <li class="nav-item">
         <a class="nav-link active" id="admin-console-lists-tab" data-toggle="tab" href="#admin-console-lists" role="tab" aria-controls="search" aria-selected="true">Lists</a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link" id="admin-console-archive-tab" data-toggle="tab" href="#admin-console-archive" role="tab" aria-controls="search" aria-selected="true">Archive</a>
+    </li>
 </ul>
 <div class="tab-content mt-2" id="admin-console-nav-tabs-content">
     <div class="tab-pane show active" id="admin-console-lists" role="tabpanel" aria-labelledby="admin-console-lists-tab">
         {% include "tabs/admin-console-tabs/lists-tab.html" %}
+    </div>
+    <div class="tab-pane" id="admin-console-archive" role="tabpanel" aria-labelledby="admin-console-archive-tab">
+        {% include "tabs/admin-console-tabs/archive-tab.html" %}
     </div>
 </div>

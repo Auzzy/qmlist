@@ -38,19 +38,28 @@ class ShoppingList(db.Model):
     name = db.Column(db.String(255), unique=True)
     departure = db.Column(db.DateTime)
     rtmid = db.Column(db.Integer)
+    isarchived = db.Column(db.Boolean, default=False)
+
+    @staticmethod
+    def archived():
+        return ShoppingList.query.filter_by(isarchived=True)
+
+    @staticmethod
+    def active():
+        return ShoppingList.query.filter_by(isarchived=False)
 
     @staticmethod
     def next():
         lists_after_now = ShoppingList.future()
         next_list = min(lists_after_now, key=operator.attrgetter("departure")) if lists_after_now else None
         if not next_list:
-            all_lists = ShoppingList.query.all()
+            all_lists = ShoppingList.active().all()
             next_list = max(all_lists, key=operator.attrgetter("departure")) if all_lists else None
         return next_list
 
     @staticmethod
     def future():
-        return ShoppingList.query.filter(ShoppingList.departure >= datetime.datetime.now()).all()
+        return ShoppingList.active().filter(ShoppingList.departure >= datetime.datetime.now()).all()
 
 class Categories(db.Model):
     id = db.Column(db.Integer, primary_key=True)
