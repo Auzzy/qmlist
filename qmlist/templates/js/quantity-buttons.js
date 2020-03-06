@@ -7,13 +7,8 @@ function toggleDecr(decrBtn, disable) {
 }
 
 function decrButton(shoppingListName, itemName, itemQuantity) {
-    var decrBtn = $("<a></a>")
+    var decrBtn = faButton("fa", "fa-minus-square", {"color": "red", "size": "lg"})
         .addClass("decr-btn")
-        .attr("href", "#")
-        .append($("<div></div>")
-            .addClass("badge")
-            .addClass("badge-danger")
-            .append($("<i></i>").addClass("fa fa-minus fa-xs")))
         .click(function() {
             var decrBtn = $(this);
             $.post("{{ url_for('decrement_item_count') }}", {"shopping-list": shoppingListName, "item-name": itemName})
@@ -34,14 +29,8 @@ function decrButton(shoppingListName, itemName, itemQuantity) {
 }
 
 function incrButton(shoppingListName, itemName) {
-    return $("<a></a>")
+    return faButton("fa", "fa-plus-square", {"color": "limegreen", "size": "lg"})
         .addClass("incr-btn")
-        .attr("href", "#")
-        .append($("<div></div>")
-            .addClass("badge")
-            .addClass("badge-success")
-            .append($("<i></i>").addClass("fa fa-plus fa-xs"))
-        )
         .click(function() {
             var incrBtn = $(this);
             $.post("{{ url_for('increment_item_count') }}", {"shopping-list": shoppingListName, "item-name": itemName})
