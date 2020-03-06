@@ -40,9 +40,8 @@ a[disabled] {
     cursor: default;
 }
 
-a.decr-btn[disabled] div {
-    color: white;
-    background-color: #e87c86;
+a.decr-btn[disabled] i {
+    color: #e87c86 !important;
 }
 
 /* For the datetime picker */

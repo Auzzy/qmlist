@@ -5,15 +5,7 @@ function adminConsoleEditListName(listName) {
             .attr("type", "text")
             .css("float", "left")
             .val(listName))
-        .append($("<a></a>")
-            .attr("href", "#")
-            .css("color", "limegreen")
-            .append($("<i></i>")
-                .addClass("fa")
-                .addClass("fa-check-square")
-                .addClass("fa-lg")
-                .css("float", "left")
-                .css("margin-left", "5px"))
+        .append(faButton("fa", "fa-check-square", {"size": "lg", "color": "limegreen", "margin-left": "5px", "float": "left"})
             .click(function() {
                 $.post("{{ url_for('update_name') }}", {shopping_list: listName, name: $(this).prev().val()})
                     .done(function(data) {
@@ -26,15 +18,7 @@ function adminConsoleEditListName(listName) {
                         adminConsoleDisplayListName(data["name"]);
                     });
             }))
-        .append($("<a></a>")
-            .attr("href", "#")
-            .css("color", "red")
-            .append($("<i></i>")
-                .addClass("fa")
-                .addClass("fa-window-close")
-                .addClass("fa-lg")
-                .css("float", "left")
-                .css("margin-left", "5px"))
+        .append(faButton("fa", "fa-window-close", {"size": "lg", "color": "red", "margin-left": "5px", "float": "left"})
             .click(function() {
                 adminConsoleDisplayListName(listName);
             }));
@@ -46,13 +30,7 @@ function adminConsoleDisplayListName(listName) {
         .append($("<div></div>")
             .css("float", "left")
             .text(listName))
-        .append($("<a></a>")
-            .attr("href", "#")
-            .append($("<i></i>")
-                .addClass("fa")
-                .addClass("fa-edit")
-                .css("float", "left")
-                .css("margin-left", "5px"))
+        .append(faButton("fa", "fa-edit", {"margin-left": "5px", "float": "left"})
             .click(function() {
                 adminConsoleEditListName(listName);
             }));
@@ -70,13 +48,7 @@ function adminConsoleDisplayLists(lists) {
                 .attr("data-shopping-list", list_info["name"])
                 .append($("<div></div>"))
                 .append($("<div></div>")
-                    .append($("<a></a>")
-                        .css("float", "left")
-                        .attr("href", "#")
-                        .append($("<i></i>")
-                            .addClass("fa")
-                            .addClass("fa-edit")
-                            .css("margin-right", "5px"))
+                    .append(faButton("fa", "fa-edit", {"margin-right": "5px", "float": "left"})
                         .click(function() {
                             $("#edit-list-datepicker").bootstrapMaterialDatePicker("setDate", list_info["departure"]);
                             $("#edit-list-datepicker").attr("data-shopping-list", list_info["name"]);
@@ -86,19 +58,7 @@ function adminConsoleDisplayLists(lists) {
                         .css("font-style", "italic")
                         .css("float", "left")
                         .text(list_info["departure"]))
-                    // Use a spacer rather than margin so the gap is unclickable
-                    .append($("<div></div>")
-                        .css("float", "left")
-                        .css("width", "10px")
-                        .html("&nbsp;"))
-                    .append($("<a></a>")
-                        .css("float", "left")
-                        .attr("href", "#")
-                        .append($("<i></i>")
-                            .addClass("fa")
-                            .addClass("fa-trash")
-                            .addClass("fa-lg")
-                            .css("color", "red"))
+                   .append(faButton("fa", "fa-trash", {"size": "lg", "color": "red", "margin-left": "15px", "float": "left"})
                         .click(function() {
                             bootbox.confirm({
                                 message: `Are you sure you want to delete the shopping list "${list_info["name"]}"?`,
