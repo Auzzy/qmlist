@@ -66,6 +66,7 @@ function adminConsoleDisplayLists(rootElementId, lists, archiveView) {
         columnRight.append($("<div></div>")
             .css("font-style", "italic")
             .css("float", "left")
+            .attr("data-departure", list_info["departure"])
             .text(list_info["departure"]));
 
         if (archiveView) {
@@ -171,7 +172,9 @@ $("#edit-list-datepicker").bootstrapMaterialDatePicker().on("change", function()
     var shoppingList = $("#edit-list-datepicker").attr("data-shopping-list");
     $.post("{{ url_for('update_departure') }}", {shopping_list: shoppingList, departure: $("#edit-list-datepicker").val()})
         .done(function(data) {
-            $(`[data-shopping-list="${shoppingList}"] div div`).text(data["departure"]);
+            $(`[data-shopping-list="${shoppingList}"] [data-departure]`)
+                .attr("data-departure", data["departure"])
+                .text(data["departure"]);
             $("#edit-list-datepicker").removeAttr("data-shopping-list").val("");
         });
 });
