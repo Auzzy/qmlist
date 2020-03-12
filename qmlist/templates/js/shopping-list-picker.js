@@ -26,6 +26,7 @@ $("#load-list-dropdown").on("show.bs.dropdown", function() {
     $.get("{{ url_for('get_list_info') }}")
         .done(function(data) {
             $("#shopping-list-picker").empty();
+            data["lists"].sort((first, second) => first["departure"] - second["departure"]);
             data["lists"].forEach(list_info => {
                 $("#shopping-list-picker")
                     .append($("<a></a>")
