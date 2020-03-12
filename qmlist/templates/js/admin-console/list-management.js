@@ -46,6 +46,7 @@ function adminConsoleDisplayLists(rootElementId, lists, archiveView) {
     archiveView = archiveView || false;
 
     $(`#${rootElementId}`).empty();
+    lists.sort((first, second) => first["departure"] - second["departure"]);
     lists.forEach(list_info => {
         var departureStr = moment.unix(list_info["departure"]).format(LIST_DATEPICKER_FORMAT);
 
