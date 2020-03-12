@@ -3,27 +3,44 @@ var LIST_DATEPICKER_FORMAT = "ddd DD-MMM-YYYY HH:mm";
 function adminConsoleEditListName(rootElementId, listName) {
     var nameArea = $(`#${rootElementId} li[data-shopping-list='${listName}']`).children().first();
     nameArea.empty()
-        .append($("<input></input>")
-            .attr("type", "text")
-            .css("float", "left")
-            .val(listName))
-        .append(faButton("fa", "fa-check-square", {"size": "lg", "color": "limegreen", "margin-left": "5px", "float": "left"})
-            .click(function() {
-                $.post("{{ url_for('update_name') }}", {shopping_list: listName, name: $(this).prev().val()})
-                    .done(function(data) {
-                        $(`#${rootElementId} li[data-shopping-list='${listName}']`)
-                            .attr("data-shopping-list", data["name"]);
+        .append($("<form></form>")
+            .attr("id", "edit-list-name-form")
+            .addClass("needs-validation")
+            .addClass("form-inline")
+            .css("margin-bottom", "0px")
+            .attr("action", "")
+            .attr("novalidate", "")
+            .append($("<input></input>")
+                .addClass("form-control")
+                .css("float", "left")
+                .attr("type", "text")
+                .attr("required", "")
+                .val(listName))
+            .append(faButton("fa", "fa-check-square", {"size": "lg", "color": "limegreen", "margin-left": "5px", "float": "left"})
+                .click(function() {
+                    var form = $("#edit-list-name-form");
+                    var formElement = form.get(0);
+                    if (formElement.checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        form.addClass("was-validated");
+                    } else {
+                        $.post("{{ url_for('update_name') }}", {shopping_list: listName, name: $("#edit-list-name-form input").val()})
+                            .done(function(data) {
+                                $(`#${rootElementId} li[data-shopping-list='${listName}']`)
+                                    .attr("data-shopping-list", data["name"]);
 
-                        if ($("#list-tab").attr("data-list-name") === listName) {
-                            setListTabName(data["name"]);
-                        }
-                        adminConsoleDisplayListName(rootElementId, data["name"], false);
-                    });
-            }))
-        .append(faButton("fa", "fa-window-close", {"size": "lg", "color": "red", "margin-left": "5px", "float": "left"})
-            .click(function() {
-                adminConsoleDisplayListName(rootElementId, listName, false);
-            }));
+                                if ($("#list-tab").attr("data-list-name") === listName) {
+                                    setListTabName(data["name"]);
+                                }
+                                adminConsoleDisplayListName(rootElementId, data["name"], false);
+                            });
+                    }
+                }))
+            .append(faButton("fa", "fa-window-close", {"size": "lg", "color": "red", "margin-left": "5px", "float": "left"})
+                .click(function() {
+                    adminConsoleDisplayListName(rootElementId, listName, false);
+                })));
 }
 
 function adminConsoleDisplayListName(rootElementId, listName, archiveView) {
@@ -146,21 +163,33 @@ $("#new-list-button").click(function() {
 });
 
 $("#create-list-cancel").click(function() {
-    $("#create-list-form").css("display", "none");
+    $("#create-list-form")
+        .css("display", "none")
+        .removeClass("was-validated");
     $("#create-list-name").val("");
     $("#create-list-datepicker").val("");
 });
 
-$("#create-list-submit").click(function() {
-    var departureSecondsSinceEpoch = moment($("#create-list-datepicker").val(), LIST_DATEPICKER_FORMAT).unix();
-    $.post("{{ url_for('create_new_list') }}", {name: $("#create-list-name").val(), departureSeconds: departureSecondsSinceEpoch})
-        .done(function(data) {
-            adminConsoleDisplayLists("admin-console-lists-of-lists", data["lists"]);
-            loadShoppingListTab($("#create-list-name").val());
-            $("#create-list-form").css("display", "none");
-            $("#create-list-name").val("");
-            $("#create-list-datepicker").val("");
-        });
+$("#create-list-submit").click(function(event) {
+    var form = $("#create-list-form");
+    var formElement = form.get(0);
+    if (formElement.checkValidity() === false) {
+        event.preventDefault();
+        event.stopPropagation();
+        form.addClass("was-validated");
+    } else {
+        var departureSecondsSinceEpoch = moment($("#create-list-datepicker").val(), LIST_DATEPICKER_FORMAT).unix();
+        $.post("{{ url_for('create_new_list') }}", {name: $("#create-list-name").val(), departureSeconds: departureSecondsSinceEpoch})
+            .done(function(data) {
+                adminConsoleDisplayLists("admin-console-lists-of-lists", data["lists"]);
+                loadShoppingListTab($("#create-list-name").val());
+                $("#create-list-form")
+                    .css("display", "none")
+                    .removeClass("was-validated");
+                $("#create-list-name").val("");
+                $("#create-list-datepicker").val("");
+            });
+    }
 });
 
 $("#create-list-datepicker").bootstrapMaterialDatePicker({
