@@ -1,3 +1,5 @@
+var LIST_DATEPICKER_FORMAT = "ddd DD-MMM-YYYY HH:mm";
+
 function adminConsoleEditListName(rootElementId, listName) {
     var nameArea = $(`#${rootElementId} li[data-shopping-list='${listName}']`).children().first();
     nameArea.empty()
@@ -45,6 +47,8 @@ function adminConsoleDisplayLists(rootElementId, lists, archiveView) {
 
     $(`#${rootElementId}`).empty();
     lists.forEach(list_info => {
+        var departureStr = moment.unix(list_info["departure"]).format(LIST_DATEPICKER_FORMAT);
+
         var shoppingListElement = $("<li></li>")
             .addClass("list-group-item")
             .addClass("d-flex")
@@ -57,7 +61,7 @@ function adminConsoleDisplayLists(rootElementId, lists, archiveView) {
         if (!archiveView) {
             columnRight.append(faButton("fa", "fa-edit", {"color": "darkorange", "margin-right": "5px", "float": "left"})
                 .click(function() {
-                    $("#edit-list-datepicker").bootstrapMaterialDatePicker("setDate", list_info["departure"]);
+                    $("#edit-list-datepicker").bootstrapMaterialDatePicker("setDate", departureStr);
                     $("#edit-list-datepicker").attr("data-shopping-list", list_info["name"]);
                     $("#edit-list-datepicker").click();
                 }))
@@ -66,8 +70,8 @@ function adminConsoleDisplayLists(rootElementId, lists, archiveView) {
         columnRight.append($("<div></div>")
             .css("font-style", "italic")
             .css("float", "left")
-            .attr("data-departure", list_info["departure"])
-            .text(list_info["departure"]));
+            .attr("data-departure", departureStr)
+            .text(departureStr));
 
         if (archiveView) {
             columnRight.append(faButton("fa", "fa-folder-open", {"size": "lg", "color": "blue", "margin-left": "15px", "float": "left"})
@@ -147,7 +151,8 @@ $("#create-list-cancel").click(function() {
 });
 
 $("#create-list-submit").click(function() {
-    $.post("{{ url_for('create_new_list') }}", {name: $("#create-list-name").val(), date: $("#create-list-datepicker").val()})
+    var departureSecondsSinceEpoch = moment($("#create-list-datepicker").val(), LIST_DATEPICKER_FORMAT).unix();
+    $.post("{{ url_for('create_new_list') }}", {name: $("#create-list-name").val(), departureSeconds: departureSecondsSinceEpoch})
         .done(function(data) {
             adminConsoleDisplayLists("admin-console-lists-of-lists", data["lists"]);
             loadShoppingListTab($("#create-list-name").val());
@@ -158,23 +163,25 @@ $("#create-list-submit").click(function() {
 });
 
 $("#create-list-datepicker").bootstrapMaterialDatePicker({
-    format: 'ddd DD-MMM-YYYY HH:mm',
+    format: LIST_DATEPICKER_FORMAT,
     switchOnClick: true,
     triggerEvent: "focus"
 });
 $("#edit-list-datepicker").bootstrapMaterialDatePicker({
-    format: 'ddd DD-MMM-YYYY HH:mm',
+    format: LIST_DATEPICKER_FORMAT,
     switchOnClick: true,
     triggerEvent: "click"
 });
 
 $("#edit-list-datepicker").bootstrapMaterialDatePicker().on("change", function() {
     var shoppingList = $("#edit-list-datepicker").attr("data-shopping-list");
-    $.post("{{ url_for('update_departure') }}", {shopping_list: shoppingList, departure: $("#edit-list-datepicker").val()})
+    var departureSecondsSinceEpoch = moment($("#edit-list-datepicker").val(), LIST_DATEPICKER_FORMAT).unix();
+    $.post("{{ url_for('update_departure') }}", {shopping_list: shoppingList, departureSeconds: departureSecondsSinceEpoch})
         .done(function(data) {
+            var departureStr = moment.unix(data["departureSeconds"]).format(LIST_DATEPICKER_FORMAT);
             $(`[data-shopping-list="${shoppingList}"] [data-departure]`)
-                .attr("data-departure", data["departure"])
-                .text(data["departure"]);
+                .attr("data-departure", departureStr)
+                .text(departureStr);
             $("#edit-list-datepicker").removeAttr("data-shopping-list").val("");
         });
 });

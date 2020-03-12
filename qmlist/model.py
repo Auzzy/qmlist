@@ -36,7 +36,7 @@ class Department(db.Model):
 class ShoppingList(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(255), unique=True)
-    departure = db.Column(db.DateTime)
+    departure = db.Column(db.BigInteger)
     rtmid = db.Column(db.Integer)
     isarchived = db.Column(db.Boolean, default=False)
 
@@ -59,7 +59,7 @@ class ShoppingList(db.Model):
 
     @staticmethod
     def future():
-        return ShoppingList.active().filter(ShoppingList.departure >= datetime.datetime.now()).all()
+        return ShoppingList.active().filter(ShoppingList.departure >= datetime.datetime.now().timestamp()).all()
 
 class Categories(db.Model):
     id = db.Column(db.Integer, primary_key=True)
