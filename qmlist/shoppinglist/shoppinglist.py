@@ -70,7 +70,7 @@ class PersistentShoppingList(object):
             return self.items[name].quantity
 
     def is_editable(self):
-        return self.departure >= datetime.datetime.now()
+        return self.departure >= datetime.datetime.now().timestamp()
 
     def delete(self):
         rtmlib.delete_list(self._client, self._id)

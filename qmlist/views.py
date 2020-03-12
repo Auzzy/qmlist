@@ -195,7 +195,7 @@ def _get_list_info_raw(archived=None):
     for shopping_list in table.all():
         list_info.append({
             "name": shopping_list.name,
-            "departure": shopping_list.departure.strftime(DEPARTURE_FORMAT)
+            "departure": shopping_list.departure
         })
     return list_info
 
@@ -222,16 +222,17 @@ def get_active_list_info():
 @roles_required("admin")
 def create_new_list():
     name = request.form["name"]
-    date = datetime.datetime.strptime(request.form["date"], DEPARTURE_FORMAT)
+    departure_seconds = int(request.form["departureSeconds"])
 
     if name not in _SHOPPING_LISTS:
         _SHOPPING_LISTS[name] = {}
 
     if current_user.id not in _SHOPPING_LISTS[name]:
-        _SHOPPING_LISTS[name][current_user.id] = shoppinglist.PersistentShoppingList.get(name, date)
+        _SHOPPING_LISTS[name][current_user.id] = shoppinglist.PersistentShoppingList.get(name, departure_seconds)
         if not _SHOPPING_LISTS[name][current_user.id]:
-            _SHOPPING_LISTS[name][current_user.id]= shoppinglist.PersistentShoppingList.create(name, date)
-        model.db.session.add(model.ShoppingList(name=name, rtmid=_SHOPPING_LISTS[name][current_user.id]._id, departure=date))
+            _SHOPPING_LISTS[name][current_user.id]= shoppinglist.PersistentShoppingList.create(name, departure_seconds)
+
+        model.db.session.add(model.ShoppingList(name=name, rtmid=_SHOPPING_LISTS[name][current_user.id]._id, departure=departure_seconds))
         model.db.session.commit()
 
     return jsonify({"lists": _get_list_info_raw(False)})
@@ -284,13 +285,12 @@ def unarchive_list():
 @roles_required("admin")
 def update_departure():
     shopping_list_name = request.form["shopping_list"]
-    departure_str = request.form["departure"]
+    departure_seconds = int(request.form["departureSeconds"])
 
-    new_departure = datetime.datetime.strptime(departure_str, DEPARTURE_FORMAT)
-    model.ShoppingList.active().filter_by(name=shopping_list_name).one().departure = new_departure
+    model.ShoppingList.active().filter_by(name=shopping_list_name).one().departure = departure_seconds
     model.db.session.commit()
 
-    return jsonify({"departure": departure_str})
+    return jsonify({"departureSeconds": departure_seconds})
 
 @app.route("/admin/lists/name", methods=["POST"])
 @login_required
