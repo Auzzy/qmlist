@@ -25,21 +25,29 @@ function adminConsoleEditListName(rootElementId, listName) {
                         event.stopPropagation();
                         form.addClass("was-validated");
                     } else {
-                        $.post("{{ url_for('update_name') }}", {shopping_list: listName, name: $("#edit-list-name-form input").val()})
+                        var currentListName = $(this).parents("li").first().attr("data-shopping-list");
+                        $.post("{{ url_for('update_name') }}", {shopping_list: currentListName, name: $("#edit-list-name-form input").val()})
                             .done(function(data) {
-                                $(`#${rootElementId} li[data-shopping-list='${listName}']`)
+                                $(`#${rootElementId} li[data-shopping-list='${currentListName}']`)
                                     .attr("data-shopping-list", data["name"]);
 
-                                if ($("#list-tab").attr("data-list-name") === listName) {
+                                if ($("#list-tab").attr("data-list-name") === currentListName) {
                                     setListTabName(data["name"]);
                                 }
                                 adminConsoleDisplayListName(rootElementId, data["name"], false);
+                            })
+                            .fail(function (data) {
+                                var error = data["responseJSON"]["error"];
+                                $("#create-list-form").removeClass("was-validated");
+                                if (error["field"] === "name") {
+                                    $("#edit-list-name-form input").addClass("is-invalid");
+                                }
                             });
                     }
                 }))
             .append(faButton("fa", "fa-window-close", {"size": "lg", "color": "red", "margin-left": "5px", "float": "left"})
                 .click(function() {
-                    adminConsoleDisplayListName(rootElementId, listName, false);
+                    adminConsoleDisplayListName(rootElementId, $(this).parents("li").first().attr("data-shopping-list"), false);
                 })));
 }
 
@@ -54,7 +62,7 @@ function adminConsoleDisplayListName(rootElementId, listName, archiveView) {
     if (!archiveView) {
         nameArea.append(faButton("fa", "fa-edit", {"color": "darkorange", "margin-left": "5px", "float": "left"})
             .click(function() {
-                adminConsoleEditListName(rootElementId, listName);
+                adminConsoleEditListName(rootElementId, $(this).parents("li").first().attr("data-shopping-list"));
             }));
     }
 }
@@ -80,7 +88,7 @@ function adminConsoleDisplayLists(rootElementId, lists, archiveView) {
             columnRight.append(faButton("fa", "fa-edit", {"color": "darkorange", "margin-right": "5px", "float": "left"})
                 .click(function() {
                     $("#edit-list-datepicker").bootstrapMaterialDatePicker("setDate", departureStr);
-                    $("#edit-list-datepicker").attr("data-shopping-list", list_info["name"]);
+                    $("#edit-list-datepicker").attr("data-shopping-list", $(this).parents("li").first().attr("data-shopping-list"));
                     $("#edit-list-datepicker").click();
                 }))
         }
@@ -94,7 +102,7 @@ function adminConsoleDisplayLists(rootElementId, lists, archiveView) {
         if (archiveView) {
             columnRight.append(faButton("fa", "fa-folder-open", {"size": "lg", "color": "blue", "margin-left": "15px", "float": "left"})
                 .click(function() {
-                    $.post("{{ url_for('unarchive_list') }}", {shopping_list: list_info["name"]})
+                    $.post("{{ url_for('unarchive_list') }}", {shopping_list: $(this).parents("li").first().attr("data-shopping-list")})
                         .done(function(data) {
                             adminConsoleDisplayLists(rootElementId, data["lists"], archiveView);
                         });
@@ -102,10 +110,10 @@ function adminConsoleDisplayLists(rootElementId, lists, archiveView) {
         } else {
             columnRight.append(faButton("fa", "fa-folder", {"size": "lg", "color": "blue", "margin-left": "15px", "float": "left"})
                 .click(function() {
-                    $.post("{{ url_for('archive_list') }}", {shopping_list: list_info["name"]})
+                    $.post("{{ url_for('archive_list') }}", {shopping_list: $(this).parents("li").first().attr("data-shopping-list")})
                         .done(function(data) {
                             adminConsoleDisplayLists(rootElementId, data["lists"], archiveView);
-                            if ($("#list-tab").attr("data-list-name") === list_info["name"]) {
+                            if ($("#list-tab").attr("data-list-name") === $(this).parents("li").first().attr("data-shopping-list")) {
                                 loadShoppingListTab(data["load"]);
                             }
                         });
@@ -114,18 +122,19 @@ function adminConsoleDisplayLists(rootElementId, lists, archiveView) {
 
         columnRight.append(faButton("fa", "fa-trash", {"size": "lg", "color": "red", "margin-left": " 5px", "float": "left"})
             .click(function() {
+                var listName = $(this).parents("li").first().attr("data-shopping-list");
                 bootbox.confirm({
-                    message: `Are you sure you want to delete the shopping list "${list_info["name"]}"?`,
+                    message: `Are you sure you want to delete the shopping list "${listName}"?`,
                     buttons: {
-                        confirm: {label: `Delete "${list_info["name"]}"`, className: 'btn-success'},
+                        confirm: {label: `Delete "${listName}"`, className: 'btn-success'},
                         cancel: {label: 'Cancel', className: 'btn-outline-danger'}
                     },
                     callback: function (result) {
                         if (result) {
-                            $.ajax({method: "DELETE", url: "{{ url_for('delete_list') }}", data: {shopping_list: list_info["name"]}})
+                            $.ajax({method: "DELETE", url: "{{ url_for('delete_list') }}", data: {shopping_list: listName}})
                                 .done(function(data) {
                                     adminConsoleDisplayLists(rootElementId, data["lists"], archiveView);
-                                    if ($("#list-tab").attr("data-list-name") === list_info["name"]) {
+                                    if ($("#list-tab").attr("data-list-name") === listName) {
                                         loadShoppingListTab(data["load"]);
                                     }
                                 });
@@ -186,8 +195,23 @@ $("#create-list-submit").click(function(event) {
                 $("#create-list-form")
                     .css("display", "none")
                     .removeClass("was-validated");
-                $("#create-list-name").val("");
-                $("#create-list-datepicker").val("");
+                $(".server-feedback").remove();
+                $("#create-list-name ~ .invalid-feedback").css("display", "");
+                $("#create-list-name").removeClass("is-invalid").val("");
+                $("#create-list-datepicker").removeClass("is-invalid").val("");
+            })
+            .fail(function(data) {
+                var error = data["responseJSON"]["error"];
+                $("#create-list-form").removeClass("was-validated");
+                if (error["field"] === "name") {
+                    $("#create-list-name ~ .invalid-feedback").css("display", "none");
+                    $("#create-list-name")
+                        .addClass("is-invalid")
+                        .after($("<div></div>")
+                            .addClass("server-feedback")
+                            .addClass("invalid-feedback")
+                            .text(error["message"]));
+                }
             });
     }
 });
