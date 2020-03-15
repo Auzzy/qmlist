@@ -70,11 +70,11 @@ class Categories(db.Model):
     products = db.relationship('Product', backref='category', lazy=True)
 
 class Product(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    sku = db.Column(db.String(32), primary_key=True)
+    store = db.Column(db.String(255), primary_key=True)
     name = db.Column(db.String(255))
     categoryid = db.Column(db.Integer, db.ForeignKey("categories.id"))
     url = db.Column(db.String(255))
-    store = db.Column(db.String(255))
     stocked = db.Column(db.String(255))
     price_min = db.Column(db.Numeric())
     price_max = db.Column(db.Numeric())
