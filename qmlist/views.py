@@ -223,6 +223,9 @@ def get_active_list_info():
 def create_new_list():
     name = request.form["name"]
     departure_seconds = int(request.form["departureSeconds"])
+    
+    if model.ShoppingList.query.filter_by(name=name).first():
+        return jsonify({"error": {"message": f"The list \"{name}\" already exists.", "field": "name"}}), 409
 
     if name not in _SHOPPING_LISTS:
         _SHOPPING_LISTS[name] = {}
@@ -299,12 +302,16 @@ def update_name():
     shopping_list_name = request.form["shopping_list"]
     new_name = request.form["name"]
 
+    if model.ShoppingList.active().filter_by(name=new_name).first():
+        return jsonify({"error": {"message": f"The list \"{new_name}\" already exists.", "field": "name"}}), 409
+
+    # Update name in memory and RtM
+    # Doing this first so if we need to hit the database, the old name is still used.
+    shopping_list = get_shopping_list(shopping_list_name)
+    shopping_list.name = new_name
+
     # Update name in database
     model.ShoppingList.active().filter_by(name=shopping_list_name).one().name = new_name
     model.db.session.commit()
-
-    # Update name in memory and RtM
-    shopping_list = get_shopping_list(shopping_list_name)
-    shopping_list.name = new_name
 
     return jsonify({"name": new_name})
