@@ -79,6 +79,14 @@ class Product(db.Model):
     price_min = db.Column(db.Numeric())
     price_max = db.Column(db.Numeric())
 
+    original_name = db.Column(db.String(255))
+
+    def __init__(self, *args, **kwargs):
+        if "name" in kwargs:
+            kwargs["original_name"] = kwargs["name"]
+
+        super().__init__(*args, **kwargs)
+
     @staticmethod
     def active():
         return Product.query.filter_by(isactive=True)
