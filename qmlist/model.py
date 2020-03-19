@@ -76,14 +76,20 @@ class Product(db.Model):
     categoryid = db.Column(db.Integer, db.ForeignKey("categories.id"))
     url = db.Column(db.String(255))
     isactive = db.Column(db.Boolean, default=True)
-    price_min = db.Column(db.Numeric())
-    price_max = db.Column(db.Numeric())
+    price_min = db.Column(db.Numeric(asdecimal=False))
+    price_max = db.Column(db.Numeric(asdecimal=False))
 
     original_name = db.Column(db.String(255))
+    original_price_min = db.Column(db.Numeric(asdecimal=False))
+    original_price_max = db.Column(db.Numeric(asdecimal=False))
 
     def __init__(self, *args, **kwargs):
         if "name" in kwargs:
             kwargs["original_name"] = kwargs["name"]
+        if "price_min" in kwargs:
+            kwargs["original_price_min"] = kwargs["price_min"]
+        if "price_max" in kwargs:
+            kwargs["original_price_max"] = kwargs["price_max"]
 
         super().__init__(*args, **kwargs)
 
@@ -95,6 +101,28 @@ class Product(db.Model):
     def inactive():
         return Product.query.filter_by(isactive=False)
 
+    @property
+    def original_price(self):
+        return {"min": self.original_price_min, "max": self.original_price_max}
+
+    @property
+    def price(self):
+        return {"min": self.price_min, "max": self.price_max}
+
+    @price.setter
+    def price(self, value):
+        if not isinstance(value, (dict, str, int, float)):
+            raise ValueError(f"Got unexpected type for price: {type(value)}.")
+
+        if isinstance(value, dict):
+            if "max" not in value.keys() or "min" not in value.keys():
+                raise ValueError("Expected min and max price.")
+
+            self.price_min = value["min"]
+            self.price_max = value["max"]
+        else:
+            self.price_min = value
+            self.price_max = value
 
 qmlist.user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 qmlist.security.init_app(qmlist.app, datastore=qmlist.user_datastore)

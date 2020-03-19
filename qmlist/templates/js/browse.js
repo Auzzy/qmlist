@@ -65,10 +65,161 @@ function addChildCategory(childCategory) {
 
 function itemPriceToString(price) {
     if (price["max"] === price["min"]) {
-        return `$${price["max"]}`;
+        return `$${price["max"].toFixed(2)}`;
     } else {
-        return `$${price["min"]} - $${price["max"]}`;
+        return `$${price["min"].toFixed(2)} - $${price["max"].toFixed(2)}`;
     }
+}
+
+function browseDisplayItemPrice(itemPrice, itemPriceEdited) {
+    var priceArea = $("<span></span>")
+        .attr("data-section", "price");
+
+    var priceStr = itemPriceToString(itemPrice);
+
+    // {# Only add all the machinery for editing if the user is actually allowed to edit. #}
+    // {% if is_admin %}
+    priceArea
+        .append(faButton("fa", "fa-edit", {"color": "darkorange", "margin-right": "5px", "float": "left"})
+            .attr("data-sub-section", "edit-button")
+            .css("float", "left")
+            .click(function() {
+                var root = $(this).parents("[data-section='price']");
+                root.children("form").css("display", "inline-block");
+                root.children("[data-sub-section='display']").css("display", "none");
+                root.children("[data-sub-section='edit-button']").css("display", "none");
+                root.children("[data-sub-section='reset-button']").css("display", "none");
+
+                $(this).parents("li").find("[data-section='quantity']").css("display", "none");
+
+                root.find("form input[name='priceMin']").val(root.find("[data-sub-section='display']").attr("data-price-min"));
+                root.find("form input[name='priceMax']").val(root.find("[data-sub-section='display']").attr("data-price-max"));
+            }))
+        .append(faButton("fa", "fa-history", {"color": "deepskyblue", "margin-right": "5px", "float": "left"})
+            .attr("data-sub-section", "reset-button")
+            .css("float", "left")
+            .click(function() {
+                var root = $(this).parents("[data-section='price']");
+                var itemSku = $(this).parents("li[data-sku]").attr("data-sku");
+                var itemStore = $("#browse-items").attr("data-store");
+                $.post("{{ url_for('reset_item_price') }}", {sku: itemSku, store: itemStore})
+                    .done(data => {
+                        root.children("[data-sub-section='display']")
+                            .attr("data-price-min", data["price"]["min"])
+                            .attr("data-price-max", data["price"]["max"])
+                            .attr("data-edited", "false")
+                            .text(itemPriceToString(data["price"]));
+
+                        root.find("[data-sub-section='reset-button']").css("display", "none");
+                    });
+            }));
+
+    priceArea.children("[data-sub-section='display']").attr("data-edited", itemPriceEdited.toString());
+    if (!itemPriceEdited) {
+        priceArea.children("[data-sub-section='reset-button']").css("display", "none");
+    };
+    // {% endif %}
+
+    priceArea
+        .append($("<div></div>")
+            .attr("data-sub-section", "display")
+            .attr("data-price-min", itemPrice["min"])
+            .attr("data-price-max", itemPrice["max"])
+            .css("float", "left")
+            .css("font-style", "italic")
+            .text(priceStr));
+
+    // {# Only add all the machinery for editing if the user is actually allowed to edit. #}
+    // {% if is_admin %}
+    priceArea
+        .append($("<form></form>")
+            .css("display", "none")
+            .addClass("needs-validation")
+            .addClass("form-inline")
+            .css("margin-bottom", "0px")
+            .attr("action", "")
+            .attr("novalidate", "")
+            .append(faButton("fa", "fa-check-square", {"size": "lg", "color": "limegreen", "margin-right": "5px", "float": "left"})
+                .click(function() {
+                    var root = $(this).parents("[data-section='price']");
+                    var form = root.children("form");
+                    if (form.get(0).checkValidity() === false) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        form.addClass("was-validated");
+                    } else {
+                        root.find("form input").removeClass("is-invalid");
+
+                        var itemSku = $(this).parents("li[data-sku]").attr("data-sku");
+                        var itemStore = $("#browse-items").attr("data-store");
+                        $.post("{{ url_for('update_item_price') }}", {sku: itemSku, store: itemStore, price_min: form.children("input[name='priceMin']").val(), price_max: form.children("input[name='priceMax']").val()})
+                            .done(data => {
+                                root.children("form").css("display", "none");
+                                root.children("[data-sub-section='display']")
+                                    .css("display", "block")
+                                    .attr("data-price-min", data["price"]["min"])
+                                    .attr("data-price-max", data["price"]["max"])
+                                    .attr("data-edited", data["edited"].toString())
+                                    .text(itemPriceToString(data["price"]));
+                                root.children("[data-sub-section='edit-button']").css("display", "inline-block");
+
+                                $(this).parents("li").find("[data-section='quantity']").css("display", "inline-block");
+                                root.find("[data-sub-section='reset-button']").css("display", data["edited"] ? "inline-block" : "none");
+                            })
+                            .fail(data => {
+                                var errors = data["responseJSON"]["errors"];
+                                for (index in errors) {
+                                    if (errors[index]["field"] === "min") {
+                                        form.children("input[name='priceMin']").addClass("is-invalid");
+                                    }
+                                    if (errors[index]["field"] === "max") {
+                                        form.children("input[name='priceMax']").addClass("is-invalid");
+                                    }
+                                }
+                            });
+                    }
+                }))
+            .append(faButton("fa", "fa-window-close", {"size": "lg", "color": "red", "margin-right": "5px", "float": "left"})
+                .click(function() {
+                    var root = $(this).parents("[data-section='price']");
+                    root.children("form").css("display", "none");
+                    root.children("[data-sub-section='display']").css("display", "block");
+                    root.children("[data-sub-section='edit-button']").css("display", "inline-block");
+
+                    $(this).parents("li").find("[data-section='quantity']").css("display", "inline-block");
+
+                    root.find("form").children("input[name='priceMin']")
+                        .removeClass("is-invalid")
+                        .val(root.children("[data-sub-section='display']").attr("data-price-min"));
+                    root.find("form").children("input[name='priceMax']")
+                        .removeClass("is-invalid")
+                        .val(root.children("[data-sub-section='display']").attr("data-price-max"));
+                    
+                    if (root.children("[data-sub-section='display']").attr("data-edited") == "true") {
+                        root.children("[data-sub-section='reset-button']").css("display", "inline-block");
+                    }
+                }))
+            .append($("<input></input>")
+                .addClass("form-control")
+                .css("float", "left")
+                .attr("name", "priceMin")
+                .attr("type", "text")
+                // It seems Bootstrap doesn't strickly follow the size attribute. This makes it as small as possible, which is still plenty big.
+                .attr("size", "1")
+                .attr("required", "")
+                .val(itemPrice["min"]))
+            .append($("<input></input>")
+                .addClass("form-control")
+                .css("float", "left")
+                .attr("name", "priceMax")
+                .attr("type", "text")
+                // It seems Bootstrap doesn't strickly follow the size attribute. This makes it as small as possible, which is still plenty big.
+                .attr("size", "1")
+                .attr("required", "")
+                .val(itemPrice["max"])));
+    // {% endif %}
+
+    return priceArea;
 }
 
 function browseDisplayItemName(itemName, itemEdited) {
@@ -82,6 +233,7 @@ function browseDisplayItemName(itemName, itemEdited) {
             .css("float", "left")
             .text(itemName));
 
+    // {# Only add all the machinery for editing if the user is actually allowed to edit. #}
     // {% if is_admin %}
     nameArea
         .append(faButton("fa", "fa-edit", {"color": "darkorange", "margin-left": "5px", "float": "left"})
@@ -117,7 +269,6 @@ function browseDisplayItemName(itemName, itemEdited) {
     if (!itemEdited) {
         nameArea.children("[data-sub-section='reset-button']").css("display", "none");
     }
-    // {% endif %}
 
     nameArea
         .append($("<form></form>")
@@ -181,6 +332,7 @@ function browseDisplayItemName(itemName, itemEdited) {
                         .removeClass("is-invalid")
                         .val(root.children("[data-sub-section='display']").attr("data-item"));
                 })));
+    // {% endif %}
 
     return nameArea;
 }
@@ -222,14 +374,13 @@ function layoutItems(pageno) {
                     itemElement
                         .attr("data-quantity", item["quantity"])
                         .append($("<div></div>")
-                            .append($("<div></div>")
-                                .attr("style", "font-style: italic; float: left")
-                                .text(itemPriceToString(item["price"])))
+                            .append(browseDisplayItemPrice(item["price"], item["edited"]["price"]))
                             .append($("<div></div>")
                                 .attr("style", "float: left; width: 10px")
                                 .html("&nbsp;"))
                             .append($("<div></div>")
                                 .attr("style", "float: left")
+                                .attr("data-section", "quantity")
                                 .append(quantity)));
                 }
 
