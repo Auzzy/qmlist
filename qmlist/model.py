@@ -75,9 +75,17 @@ class Product(db.Model):
     name = db.Column(db.String(255))
     categoryid = db.Column(db.Integer, db.ForeignKey("categories.id"))
     url = db.Column(db.String(255))
-    stocked = db.Column(db.String(255))
+    isactive = db.Column(db.Boolean, default=True)
     price_min = db.Column(db.Numeric())
     price_max = db.Column(db.Numeric())
+
+    @staticmethod
+    def active():
+        return Product.query.filter_by(isactive=True)
+
+    @staticmethod
+    def inactive():
+        return Product.query.filter_by(isactive=False)
 
 
 qmlist.user_datastore = SQLAlchemyUserDatastore(db, User, Role)
