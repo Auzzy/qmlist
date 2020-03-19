@@ -49,7 +49,7 @@ def search():
     search_term = request.args["search"]
     pageno = int(request.args["pageno"])
 
-    all_results = model.Product.query.filter(func.lower(model.Product.name).contains(search_term.lower()))
+    all_results = model.Product.active().filter(func.lower(model.Product.name).contains(search_term.lower()))
     page_results = (all_results
             .order_by(model.Product.name)
             .offset((pageno - 1) * ITEM_PAGE_SIZE)
@@ -112,7 +112,7 @@ def browse_items_page():
     page = int(request.args["pageno"])
     item_count = int(request.args["item-count"])
 
-    store_products_query = model.Product.query.filter_by(store=store_name)
+    store_products_query = model.Product.active().filter_by(store=store_name)
     if category_name != ALL_CATEGORY:
         current_category = model.Categories.query.filter_by(store=store_name, name=category_name).one()
 

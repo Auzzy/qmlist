@@ -53,7 +53,7 @@ def _load_store_inventory(inventory_filepath, store_name):
     for item in inventory["inventory"]:
         categories = _load_categories(item["categories"], store_name)
         category = categories[0] if categories else None
-        matching_product = model.Product.query.filter_by(sku=item["sku"], store=store_name).first()
+        matching_product = model.Product.active().filter_by(sku=item["sku"], store=store_name).first()
         if matching_product \
                 and item["name"] == matching_product.name \
                 and category == matching_product.category \

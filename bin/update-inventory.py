@@ -19,7 +19,7 @@ def _load_categories(category_paths, store_name):
 
 def load_db_by_key():
     db_by_key = {}
-    for product in model.Product.query.all():
+    for product in model.Product.active().all():
         product_as_dict = {
             "name": product.name,
             "category": product.category,
@@ -66,11 +66,11 @@ def update_inventory(bjs_inventory_filepath, rd_inventory_filepath):
 
     for pkey in to_update:
         item = inv_by_key[pkey]
-        product = db_by_key[pkey]
-        if item == product:
+        product_dict = db_by_key[pkey]
+        if item == product_dict:
             continue
 
-        product = model.Product.query.filter_by(sku=pkey[0], store=pkey[1]).one()
+        product = model.Product.active().filter_by(sku=pkey[0], store=pkey[1]).one()
         product.name = item["name"]
         product.category = item["category"]
         product.url = item.get("url")
@@ -78,10 +78,14 @@ def update_inventory(bjs_inventory_filepath, rd_inventory_filepath):
         product.price_max = item["price_max"]
 
     for pkey in to_add:
-        model.db.session.add(model.Product(sku=pkey[0], store=pkey[1], **inv_by_key[pkey]))
+        product = model.Product.inactive().filter_by(sku=pkey[0], store=pkey[1]).first()
+        if product:
+            product.isactive = True
+        else:
+            model.db.session.add(model.Product(sku=pkey[0], store=pkey[1], **inv_by_key[pkey]))
 
     for pkey in to_remove:
-        model.db.session.delete(model.Product.query.filter_by(sku=pkey[0], store=pkey[1]).one())
+        model.Product.active().filter_by(sku=pkey[0], store=pkey[1]).one().isactive = False
 
     model.db.session.commit()
 
