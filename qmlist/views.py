@@ -59,16 +59,16 @@ def search():
     shopping_list = get_shopping_list(shopping_list_name) if shopping_list_name else None
     page_result_dicts = []
     for product in page_results:
-        price_dict = {"max": float(product.price_max), "min": float(product.price_min)}
         edited = {
-            "name": product.name != product.original_name
+            "name": product.name != product.original_name,
+            "price": product.price != product.original_price
         }
         page_result_dicts.append({
             "sku": product.sku,
             "name": product.name,
             "quantity": shopping_list.get_item(product.name).quantity if shopping_list else None,
             "store": product.store,
-            "price": price_dict,
+            "price": product.price,
             "edited": edited
         })
     return jsonify({"search-results": page_result_dicts, "search-term": search_term, "total-results": all_results.count()})
@@ -129,16 +129,16 @@ def browse_items_page():
     shopping_list = get_shopping_list(shopping_list_name) if shopping_list_name else None
     store_items_json = []
     for product in store_products_paginator.items:
-        price_dict = {"max": float(product.price_max), "min": float(product.price_min)}
         item = shopping_list.get_item(product.name) if shopping_list else None
         edited = {
-            "name": product.name != product.original_name
+            "name": product.name != product.original_name,
+            "price": product.price != product.original_price
         }
         store_items_json.append({
             "sku": product.sku,
             "name": item.name if item else product.name,
             "quantity": item.quantity if item else None,
-            "price": price_dict,
+            "price": product.price,
             "edited": edited
         })
 
@@ -359,3 +359,61 @@ def reset_item_name():
         return jsonify({"error": {"message": f"Could not find product to update. SKU: {sku}, store: {store}", "field": "name"}}), 404
 
     return jsonify({"name": product.name})
+
+def _parse_price(price_str):
+    price = float(price_str)
+    if price <= 0:
+        raise ValueError("Price cannot be negative.")
+
+    return round(price, 2)
+
+@app.route("/admin/item/price", methods=["POST"])
+@login_required
+@roles_required("admin")
+def update_item_price():
+    sku = request.form["sku"]
+    store = request.form["store"]
+    price_min_str = request.form["price_min"]
+    price_max_str = request.form["price_max"]
+
+    errors = []
+    try:
+        price_min = _parse_price(price_min_str)
+    except ValueError:
+        errors.append({"message": f"{price_min_str} is not a valid price.", "field": "min"})
+
+    try:
+        price_max = _parse_price(price_max_str)
+    except ValueError:
+        errors.append({"message": f"{price_max_str} is not a valid price.", "field": "max"})
+
+    if errors:
+        return jsonify({"errors": errors}), 409
+
+    if price_max < price_min:
+        return jsonify({"errors": [{"message": f"Max price must be greater than min price, but {price_max} < {price_min}.", "field": "max"}]}), 409
+
+    try:
+        product = model.Product.query.filter_by(sku=sku, store=store).one()
+        product.price = {"min": price_min, "max": price_max}
+        model.db.session.commit()
+    except sqlalchemy.orm.exc.NoResultFound:
+        return jsonify({"error": {"message": f"Could not find product to update. SKU: {sku}, store: {store}", "field": "name"}}), 404
+
+    return jsonify({"price": product.price, "edited": product.price != product.original_price})
+
+@app.route("/admin/item/price/reset", methods=["POST"])
+@login_required
+@roles_required("admin")
+def reset_item_price():
+    sku = request.form["sku"]
+    store = request.form["store"]
+
+    try:
+        product = model.Product.query.filter_by(sku=sku, store=store).one()
+        product.price = product.original_price
+        model.db.session.commit()
+    except sqlalchemy.orm.exc.NoResultFound:
+        return jsonify({"error": {"message": f"Could not find product to update. SKU: {sku}, store: {store}", "field": "name"}}), 404
+
+    return jsonify({"price": product.price})
