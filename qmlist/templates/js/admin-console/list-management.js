@@ -1,10 +1,114 @@
 var LIST_DATEPICKER_FORMAT = "ddd DD-MMM-YYYY HH:mm";
 
-function adminConsoleEditListName(rootElementId, listName) {
-    var nameArea = $(`#${rootElementId} li[data-shopping-list='${listName}']`).children().first();
-    nameArea.empty()
+function adminConsoleListControl(archiveView) {
+    var controlArea = $("<div></div>")
+        .css("float", "left");
+
+    if (archiveView) {
+        controlArea.append(faButton("fa", "fa-folder-open", {"size": "lg", "color": "blue", "margin-left": "15px", "float": "left"})
+            .click(function() {
+                var root = $(this).parents("li");
+                var listName = root.attr("data-shopping-list");
+                $.post("{{ url_for('unarchive_list') }}", {shopping_list: listName})
+                    .done(function(data) {
+                        root.remove();
+                    });
+            }));
+    } else {
+        controlArea.append(faButton("fa", "fa-folder", {"size": "lg", "color": "blue", "margin-left": "15px", "float": "left"})
+            .click(function() {
+                var root = $(this).parents("li");
+                var listName = root.attr("data-shopping-list");
+                $.post("{{ url_for('archive_list') }}", {shopping_list: listName})
+                    .done(function(data) {
+                        root.remove();
+                        if ($("#list-tab").attr("data-list-name") === listName) {
+                            loadShoppingListTab(data["load"]);
+                        }
+                    });
+            }));
+    }
+
+    controlArea.append(faButton("fa", "fa-trash", {"size": "lg", "color": "red", "margin-left": " 5px", "float": "left"})
+        .click(function() {
+            var root = $(this).parents("li");
+            var listName = root.attr("data-shopping-list");
+            bootbox.confirm({
+                message: `Are you sure you want to delete the shopping list "${listName}"?`,
+                buttons: {
+                    confirm: {label: `Delete "${listName}"`, className: 'btn-success'},
+                    cancel: {label: 'Cancel', className: 'btn-outline-danger'}
+                },
+                callback: function (result) {
+                    if (result) {
+                        $.ajax({method: "DELETE", url: "{{ url_for('delete_list') }}", data: {shopping_list: listName}})
+                            .done(function(data) {
+                                root.remove();
+                                if ($("#list-tab").attr("data-list-name") === listName) {
+                                    loadShoppingListTab(data["load"]);
+                                }
+                            });
+                    }
+                }
+            });
+        }));
+
+    return controlArea;
+}
+
+function adminConsoleDisplayListDeparture(departureTimestamp, archiveView) {
+    var departureArea = $("<div></div>")
+        .attr("data-section", "departure")
+        .css("float", "left");
+
+    if (!archiveView) {
+        departureArea.append(faButton("fa", "fa-edit", {"color": "darkorange", "margin-right": "5px", "float": "left"})
+            .click(function() {
+                $("#edit-list-datepicker").bootstrapMaterialDatePicker("setDate",
+                    $(this).parents("[data-section='departure']").children("[data-sub-section='display']").attr("data-departure"));
+                $("#edit-list-datepicker").attr("data-shopping-list",
+                    $(this).parents("li").find("[data-section='name'] [data-sub-section='display']").attr("data-shopping-list"));
+                $("#edit-list-datepicker").click();
+            }))
+    }
+
+    var departureStr = moment.unix(departureTimestamp).format(LIST_DATEPICKER_FORMAT);
+    return departureArea.append($("<div></div>")
+        .attr("data-sub-section", "display")
+        .attr("data-departure", departureStr)
+        .css("font-style", "italic")
+        .css("float", "left")
+        .text(departureStr));
+}
+
+function adminConsoleDisplayListName(listName, archiveView) {
+    archiveView = archiveView || false;
+
+    var nameArea = $("<div></div>")
+        .attr("data-section", "name");
+
+    nameArea
+        .append($("<div></div>")
+            .attr("data-sub-section", "display")
+            .attr("data-shopping-list", listName)
+            .css("float", "left")
+            .text(listName));
+    if (!archiveView) {
+        nameArea.append(faButton("fa", "fa-edit", {"color": "darkorange", "margin-left": "5px", "float": "left"})
+            .attr("data-sub-section", "edit-button")
+            .click(function() {
+                var root = $(this).parents("[data-section='name']");
+                root.children("form").css("display", "inline-block");
+                root.children("[data-sub-section='display']").css("display", "none");
+                root.children("[data-sub-section='edit-button']").css("display", "none");
+
+                root.find("form input").val(root.children("[data-sub-section='display']").attr("data-shopping-list"));
+            }));
+    }
+
+    nameArea
         .append($("<form></form>")
-            .attr("id", "edit-list-name-form")
+            .css("display", "none")
             .addClass("needs-validation")
             .addClass("form-inline")
             .css("margin-bottom", "0px")
@@ -18,53 +122,45 @@ function adminConsoleEditListName(rootElementId, listName) {
                 .val(listName))
             .append(faButton("fa", "fa-check-square", {"size": "lg", "color": "limegreen", "margin-left": "5px", "float": "left"})
                 .click(function() {
-                    var form = $("#edit-list-name-form");
-                    var formElement = form.get(0);
-                    if (formElement.checkValidity() === false) {
+                    var root = $(this).parents("[data-section='name']");
+                    var form = root.children("form");
+                    if (form.get(0).checkValidity() === false) {
                         event.preventDefault();
                         event.stopPropagation();
                         form.addClass("was-validated");
                     } else {
-                        var currentListName = $(this).parents("li").first().attr("data-shopping-list");
-                        $.post("{{ url_for('update_name') }}", {shopping_list: currentListName, name: $("#edit-list-name-form input").val()})
-                            .done(function(data) {
-                                $(`#${rootElementId} li[data-shopping-list='${currentListName}']`)
-                                    .attr("data-shopping-list", data["name"]);
+                        var currentListName = root.children("[data-sub-section='display']").attr("data-shopping-list");
+                        $.post("{{ url_for('update_name') }}", {shopping_list: currentListName, name: form.children("input").val()})
+                            .done(data => {
+                                root.children("form").css("display", "none");
+                                root.children("[data-sub-section='display']")
+                                    .css("display", "block")
+                                    .attr("data-shopping-list", data["name"])
+                                    .text(data["name"]);
+                                root.children("[data-sub-section='edit-button']").css("display", "inline-block");
+                                $(this).parents("li[data-shopping-list]").attr("data-shopping-list", data["name"]);
 
                                 if ($("#list-tab").attr("data-list-name") === currentListName) {
                                     setListTabName(data["name"]);
                                 }
-                                adminConsoleDisplayListName(rootElementId, data["name"], false);
                             })
-                            .fail(function (data) {
+                            .fail(data => {
                                 var error = data["responseJSON"]["error"];
-                                $("#create-list-form").removeClass("was-validated");
                                 if (error["field"] === "name") {
-                                    $("#edit-list-name-form input").addClass("is-invalid");
+                                    form.children("input").addClass("is-invalid");
                                 }
                             });
                     }
                 }))
             .append(faButton("fa", "fa-window-close", {"size": "lg", "color": "red", "margin-left": "5px", "float": "left"})
                 .click(function() {
-                    adminConsoleDisplayListName(rootElementId, $(this).parents("li").first().attr("data-shopping-list"), false);
+                    var root = $(this).parents("[data-section='name']");
+                    root.children("form").css("display", "none");
+                    root.children("[data-sub-section='display']").css("display", "block");
+                    root.children("[data-sub-section='edit-button']").css("display", "inline-block");
                 })));
-}
 
-function adminConsoleDisplayListName(rootElementId, listName, archiveView) {
-    archiveView = archiveView || false;
-
-    var nameArea = $(`#${rootElementId} li[data-shopping-list='${listName}']`).children().first();
-    nameArea.empty()
-        .append($("<div></div>")
-            .css("float", "left")
-            .text(listName));
-    if (!archiveView) {
-        nameArea.append(faButton("fa", "fa-edit", {"color": "darkorange", "margin-left": "5px", "float": "left"})
-            .click(function() {
-                adminConsoleEditListName(rootElementId, $(this).parents("li").first().attr("data-shopping-list"));
-            }));
-    }
+    return nameArea;
 }
 
 function adminConsoleDisplayLists(rootElementId, lists, archiveView) {
@@ -73,81 +169,17 @@ function adminConsoleDisplayLists(rootElementId, lists, archiveView) {
     $(`#${rootElementId}`).empty();
     lists.sort((first, second) => first["departure"] - second["departure"]);
     lists.forEach(list_info => {
-        var departureStr = moment.unix(list_info["departure"]).format(LIST_DATEPICKER_FORMAT);
-
-        var shoppingListElement = $("<li></li>")
-            .addClass("list-group-item")
-            .addClass("d-flex")
-            .addClass("justify-content-between")
-            .addClass("align-items-center")
-            .attr("data-shopping-list", list_info["name"])
-            .append($("<div></div>"));
-
-        var columnRight = $("<div></div>");
-        if (!archiveView) {
-            columnRight.append(faButton("fa", "fa-edit", {"color": "darkorange", "margin-right": "5px", "float": "left"})
-                .click(function() {
-                    $("#edit-list-datepicker").bootstrapMaterialDatePicker("setDate", departureStr);
-                    $("#edit-list-datepicker").attr("data-shopping-list", $(this).parents("li").first().attr("data-shopping-list"));
-                    $("#edit-list-datepicker").click();
-                }))
-        }
-
-        columnRight.append($("<div></div>")
-            .css("font-style", "italic")
-            .css("float", "left")
-            .attr("data-departure", departureStr)
-            .text(departureStr));
-
-        if (archiveView) {
-            columnRight.append(faButton("fa", "fa-folder-open", {"size": "lg", "color": "blue", "margin-left": "15px", "float": "left"})
-                .click(function() {
-                    $.post("{{ url_for('unarchive_list') }}", {shopping_list: $(this).parents("li").first().attr("data-shopping-list")})
-                        .done(function(data) {
-                            adminConsoleDisplayLists(rootElementId, data["lists"], archiveView);
-                        });
-                }));
-        } else {
-            columnRight.append(faButton("fa", "fa-folder", {"size": "lg", "color": "blue", "margin-left": "15px", "float": "left"})
-                .click(function() {
-                    $.post("{{ url_for('archive_list') }}", {shopping_list: $(this).parents("li").first().attr("data-shopping-list")})
-                        .done(function(data) {
-                            adminConsoleDisplayLists(rootElementId, data["lists"], archiveView);
-                            if ($("#list-tab").attr("data-list-name") === $(this).parents("li").first().attr("data-shopping-list")) {
-                                loadShoppingListTab(data["load"]);
-                            }
-                        });
-                }));
-        }
-
-        columnRight.append(faButton("fa", "fa-trash", {"size": "lg", "color": "red", "margin-left": " 5px", "float": "left"})
-            .click(function() {
-                var listName = $(this).parents("li").first().attr("data-shopping-list");
-                bootbox.confirm({
-                    message: `Are you sure you want to delete the shopping list "${listName}"?`,
-                    buttons: {
-                        confirm: {label: `Delete "${listName}"`, className: 'btn-success'},
-                        cancel: {label: 'Cancel', className: 'btn-outline-danger'}
-                    },
-                    callback: function (result) {
-                        if (result) {
-                            $.ajax({method: "DELETE", url: "{{ url_for('delete_list') }}", data: {shopping_list: listName}})
-                                .done(function(data) {
-                                    adminConsoleDisplayLists(rootElementId, data["lists"], archiveView);
-                                    if ($("#list-tab").attr("data-list-name") === listName) {
-                                        loadShoppingListTab(data["load"]);
-                                    }
-                                });
-                        }
-                    }
-                });
-            }));
-
         $(`#${rootElementId}`)
-            .append(shoppingListElement
-                .append(columnRight));
-
-        adminConsoleDisplayListName(rootElementId, list_info["name"], archiveView);
+            .append($("<li></li>")
+                .addClass("list-group-item")
+                .addClass("d-flex")
+                .addClass("justify-content-between")
+                .addClass("align-items-center")
+                .attr("data-shopping-list", list_info["name"])
+                .append(adminConsoleDisplayListName(list_info["name"], archiveView))
+                .append($("<div></div>")
+                    .append(adminConsoleDisplayListDeparture(list_info["departure"], archiveView))
+                    .append(adminConsoleListControl(archiveView))));
     });
 }
 
@@ -181,8 +213,7 @@ $("#create-list-cancel").click(function() {
 
 $("#create-list-submit").click(function(event) {
     var form = $("#create-list-form");
-    var formElement = form.get(0);
-    if (formElement.checkValidity() === false) {
+    if (form.get(0).checkValidity() === false) {
         event.preventDefault();
         event.stopPropagation();
         form.addClass("was-validated");
@@ -233,7 +264,7 @@ $("#edit-list-datepicker").bootstrapMaterialDatePicker().on("change", function()
     $.post("{{ url_for('update_departure') }}", {shopping_list: shoppingList, departureSeconds: departureSecondsSinceEpoch})
         .done(function(data) {
             var departureStr = moment.unix(data["departureSeconds"]).format(LIST_DATEPICKER_FORMAT);
-            $(`[data-shopping-list="${shoppingList}"] [data-departure]`)
+            $(`li[data-shopping-list="${shoppingList}"] [data-section="departure"] [data-sub-section="display"]`)
                 .attr("data-departure", departureStr)
                 .text(departureStr);
             $("#edit-list-datepicker").removeAttr("data-shopping-list").val("");
