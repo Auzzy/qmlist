@@ -3,10 +3,10 @@ import itertools
 import os
 from operator import attrgetter, itemgetter
 
+import sqlalchemy
 from flask import jsonify, render_template, request
 from flask_login import logout_user
 from flask_security import current_user, login_required, roles_required
-from sqlalchemy import func
 
 from qmlist import model, qmlist
 from qmlist.qmlist import app
@@ -49,7 +49,7 @@ def search():
     search_term = request.args["search"]
     pageno = int(request.args["pageno"])
 
-    all_results = model.Product.active().filter(func.lower(model.Product.name).contains(search_term.lower()))
+    all_results = model.Product.active().filter(sqlalchemy.func.lower(model.Product.name).contains(search_term.lower()))
     page_results = (all_results
             .order_by(model.Product.name)
             .offset((pageno - 1) * ITEM_PAGE_SIZE)
@@ -60,12 +60,16 @@ def search():
     page_result_dicts = []
     for product in page_results:
         price_dict = {"max": float(product.price_max), "min": float(product.price_min)}
+        edited = {
+            "name": product.name != product.original_name
+        }
         page_result_dicts.append({
             "sku": product.sku,
             "name": product.name,
             "quantity": shopping_list.get_item(product.name).quantity if shopping_list else None,
             "store": product.store,
-            "price": price_dict
+            "price": price_dict,
+            "edited": edited
         })
     return jsonify({"search-results": page_result_dicts, "search-term": search_term, "total-results": all_results.count()})
 
@@ -127,11 +131,15 @@ def browse_items_page():
     for product in store_products_paginator.items:
         price_dict = {"max": float(product.price_max), "min": float(product.price_min)}
         item = shopping_list.get_item(product.name) if shopping_list else None
+        edited = {
+            "name": product.name != product.original_name
+        }
         store_items_json.append({
             "sku": product.sku,
             "name": item.name if item else product.name,
             "quantity": item.quantity if item else None,
-            "price": price_dict
+            "price": price_dict,
+            "edited": edited
         })
 
     page_json = {"last": store_products_paginator.pages, "current": store_products_paginator.page}
@@ -317,3 +325,37 @@ def update_name():
     model.db.session.commit()
 
     return jsonify({"name": new_name})
+
+@app.route("/admin/item/name", methods=["POST"])
+@login_required
+@roles_required("admin")
+def update_item_name():
+    sku = request.form["sku"]
+    store = request.form["store"]
+    name = request.form["name"]
+
+    try:
+        product = model.Product.query.filter_by(sku=sku, store=store).one()
+        product.name = name
+        model.db.session.commit()
+    except sqlalchemy.orm.exc.NoResultFound:
+        return jsonify({"error": {"message": f"Could not find product to update. SKU: {sku}, store: {store}", "field": "name"}}), 404
+
+    return jsonify({"name": name, "edited": product.name != product.original_name})
+
+@app.route("/admin/item/name/reset", methods=["POST"])
+@login_required
+@roles_required("admin")
+def reset_item_name():
+    print(request.form)
+    sku = request.form["sku"]
+    store = request.form["store"]
+
+    try:
+        product = model.Product.query.filter_by(sku=sku, store=store).one()
+        product.name = product.original_name
+        model.db.session.commit()
+    except sqlalchemy.orm.exc.NoResultFound:
+        return jsonify({"error": {"message": f"Could not find product to update. SKU: {sku}, store: {store}", "field": "name"}}), 404
+
+    return jsonify({"name": product.name})
