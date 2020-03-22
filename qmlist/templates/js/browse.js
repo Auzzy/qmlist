@@ -96,6 +96,7 @@ function layoutItems(pageno) {
                     .addClass("justify-content-between")
                     .addClass("align-items-center")
                     .attr("data-name", item["name"])
+                    .attr("data-sku", item["sku"])
                     .append($("<div></div>")
                         .addClass("text-truncate")
                         .attr("style", "max-width: 85%")

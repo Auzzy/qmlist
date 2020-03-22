@@ -61,6 +61,7 @@ def search():
     for product in page_results:
         price_dict = {"max": float(product.price_max), "min": float(product.price_min)}
         page_result_dicts.append({
+            "sku": product.sku,
             "name": product.name,
             "quantity": shopping_list.get_item(product.name).quantity if shopping_list else None,
             "store": product.store,
@@ -127,6 +128,7 @@ def browse_items_page():
         price_dict = {"max": float(product.price_max), "min": float(product.price_min)}
         item = shopping_list.get_item(product.name) if shopping_list else None
         store_items_json.append({
+            "sku": product.sku,
             "name": item.name if item else product.name,
             "quantity": item.quantity if item else None,
             "price": price_dict
