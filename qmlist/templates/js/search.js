@@ -13,12 +13,11 @@ function search(shoppingListName, searchTerm, pageno) {
 
     $.get("{{ url_for('search') }}", {"shopping-list": shoppingListName, "search": searchTerm, "pageno": pageno})
         .done(function(results) {
-            var searchTerm = results["search-term"];
             // $("#search-results").empty();
             $("#search-results").attr("data-search-term", searchTerm)
             $("#search-results").attr("data-next-page", pageno + 1);
 
-            results["search-results"].forEach(function(result, index) {
+            results["items"].forEach(function(result, index) {
                 var searchResult = $("<li></li>")
                     .attr("id", "search-result-" + index)
                     .addClass("list-group-item")

@@ -348,14 +348,12 @@ function layoutItems(pageno) {
     var itemCount = $("#item-count-dropdown").attr("data-item-count");
     $.get("{{ url_for('browse_items_page')}}", {"shopping-list": shoppingListName, "store-name": storeName, "category": category, "pageno": pageno, "item-count": itemCount})
         .done(function(data) {
-            $("#browse-items").attr("data-store", data["store"]);
-            $("#browse-items").attr("data-category", data["category"]);
             $("#browse-items").attr("data-page", data["page"]["current"]);
 
             $("#browse-items").empty();
 
-            for (var index in data["store-items"]) {
-                var item = data["store-items"][index];
+            for (var index in data["items"]) {
+                var item = data["items"][index];
                 var itemElement = $("<li></li>")
                     .addClass("list-group-item")
                     .addClass("d-flex")
