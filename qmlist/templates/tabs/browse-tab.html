@@ -10,11 +10,11 @@
     <hr />
     <div class="row">
         <div class="col-2">
-            <div class="dropdown float-left" data-item-count="25" id="item-count-dropdown">
-                <button class="btn btn-secondary dropdown-toggle" type="button" id="item-count-dropdown-button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+            <div class="dropdown float-left" data-item-count="25" id="browse-item-count-dropdown">
+                <button class="btn btn-secondary dropdown-toggle" type="button" id="browse-item-count-dropdown-button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                     25
                 </button>
-                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton" id="item-count-options">
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton" id="browse-item-count-options">
                     <a class="dropdown-item" data-item-count="10" href="#">10</a>
                     <a class="dropdown-item" data-item-count="25" href="#">25</a>
                     <a class="dropdown-item" data-item-count="50" href="#">50</a>
@@ -25,13 +25,13 @@
         <div class="col">
             <nav aria-label="Browse store items" id="browse-items-pagination" style="display: inline">
                 <ul class="pagination justify-content-center" id="browse-items-pagination-pages">
-                    <li class="page-item"><a class="page-link" href="#" id="browse-items-first"><i class="fa fa-angle-double-left fa-lg"></i></a></li>
-                    <li class="page-item"><a class="page-link" href="#" id="browse-items-prev"><i class="fa fa-caret-left fa-lg">&nbsp;</i></a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#" id="browse-items-first"><i class="fa fa-angle-double-left fa-lg"></i></a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#" id="browse-items-prev"><i class="fa fa-caret-left fa-lg">&nbsp;</i></a></li>
                     <li class="page-item" style="font-style: italic; margin: 5px 10px 0px;">
-                        <span id="current-page-display"></span> of <span id="last-page-display"></span>
+                        <span id="browse-items-current-page-display"></span> of <span id="browse-items-last-page-display"></span>
                     </li>
-                    <li class="page-item"><a class="page-link" href="#" id="browse-items-next"><i class="fa fa-caret-right fa-lg"></i></a></li>
-                    <li class="page-item"><a class="page-link" href="#" id="browse-items-last"><i class="fa fa-angle-double-right fa-lg"></i></a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#" id="browse-items-next"><i class="fa fa-caret-right fa-lg"></i></a></li>
+                    <li class="page-item disabled"><a class="page-link" href="#" id="browse-items-last"><i class="fa fa-angle-double-right fa-lg"></i></a></li>
                 </ul>
             </nav>
         </div>
@@ -40,13 +40,8 @@
     <div class="row">
         <div class="col-12">
             <div class="card" style="max-height: 59%">
-                <ul class="list-group" id="browse-items" style="overflow: auto;" data-store="" data-category="" data-next-page=""></ul>
+                <ul class="list-group" id="browse-items" style="overflow: auto;"></ul>
             </div>
         </div>
     </div>
 </div>
-
-<div id="scroll-top-val"></div>
-<div id="inner-height-val"></div>
-<div id="scroll-height-val"></div>
-<div id="scroll-vals"></div>
