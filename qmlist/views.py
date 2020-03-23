@@ -42,36 +42,44 @@ def home():
     default_list_name = default_list.name if default_list else None
     return render_template('index.html', default_list_name=default_list_name, is_admin=current_user.has_role("admin"))
 
+def _prepare_item_list(products_query, shopping_list_name, pageno, item_count):
+    products_paginator = products_query.order_by(model.Product.name).paginate(pageno, item_count, False)
+
+    shopping_list = get_shopping_list(shopping_list_name) if shopping_list_name else None
+    items_json = []
+    for product in products_paginator.items:
+        item = shopping_list.get_item(product.name) if shopping_list else None
+        edited = {
+            "name": product.name != product.original_name,
+            "price": product.price != product.original_price
+        }
+        items_json.append({
+            "sku": product.sku,
+            "name": item.name if item else product.name,
+            "store": product.store,
+            "quantity": item.quantity if item else None,
+            "price": product.price,
+            "edited": edited
+        })
+
+    page_json = {"last": products_paginator.pages, "current": products_paginator.page}
+    if products_paginator.has_next:
+        page_json["next"] = pageno + 1
+    if products_paginator.has_prev:
+        page_json["prev"] = pageno - 1
+
+    return jsonify({"items": items_json, "page": page_json, "total-results": products_query.count()})
+
 @app.route("/search")
 @login_required
 def search():
     shopping_list_name = request.args.get("shopping-list")
     search_term = request.args["search"]
-    pageno = int(request.args["pageno"])
+    pageno = int(request.args.get("pageno", 1))
+    item_count = int(request.args.get("item-count", 25))
 
-    all_results = model.Product.active().filter(sqlalchemy.func.lower(model.Product.name).contains(search_term.lower()))
-    page_results = (all_results
-            .order_by(model.Product.name)
-            .offset((pageno - 1) * ITEM_PAGE_SIZE)
-            .limit(ITEM_PAGE_SIZE)
-            .all())
-
-    shopping_list = get_shopping_list(shopping_list_name) if shopping_list_name else None
-    page_result_dicts = []
-    for product in page_results:
-        edited = {
-            "name": product.name != product.original_name,
-            "price": product.price != product.original_price
-        }
-        page_result_dicts.append({
-            "sku": product.sku,
-            "name": product.name,
-            "quantity": shopping_list.get_item(product.name).quantity if shopping_list else None,
-            "store": product.store,
-            "price": product.price,
-            "edited": edited
-        })
-    return jsonify({"search-results": page_result_dicts, "search-term": search_term, "total-results": all_results.count()})
+    search_results = model.Product.active().filter(sqlalchemy.func.lower(model.Product.name).contains(search_term.lower()))
+    return _prepare_item_list(search_results, shopping_list_name, pageno, item_count)
 
 def _get_category_path(category):
     if category:
@@ -114,8 +122,8 @@ def browse_items_page():
     shopping_list_name = request.args.get("shopping-list")
     store_name = request.args["store-name"]
     category_name = request.args.get("category", ALL_CATEGORY)
-    page = int(request.args["pageno"])
-    item_count = int(request.args["item-count"])
+    pageno = int(request.args.get("pageno", 1))
+    item_count = int(request.args.get("item-count", 25))
 
     store_products_query = model.Product.active().filter_by(store=store_name)
     if category_name != ALL_CATEGORY:
@@ -124,31 +132,7 @@ def browse_items_page():
         subcategory_ids = [subcategory.id for subcategory in _get_subcategories(current_category)]
         store_products_query = store_products_query.filter(model.Product.categoryid.in_(subcategory_ids))
 
-    store_products_paginator = store_products_query.order_by(model.Product.name).paginate(page, item_count, False)
-
-    shopping_list = get_shopping_list(shopping_list_name) if shopping_list_name else None
-    store_items_json = []
-    for product in store_products_paginator.items:
-        item = shopping_list.get_item(product.name) if shopping_list else None
-        edited = {
-            "name": product.name != product.original_name,
-            "price": product.price != product.original_price
-        }
-        store_items_json.append({
-            "sku": product.sku,
-            "name": item.name if item else product.name,
-            "quantity": item.quantity if item else None,
-            "price": product.price,
-            "edited": edited
-        })
-
-    page_json = {"last": store_products_paginator.pages, "current": store_products_paginator.page}
-    if store_products_paginator.has_next:
-        page_json["next"] = page + 1
-    if store_products_paginator.has_prev:
-        page_json["prev"] = page - 1
-
-    return jsonify({"store-items": store_items_json, "store": store_name, "category": category_name, "page": page_json})
+    return _prepare_item_list(store_products_query, shopping_list_name, pageno, item_count)
 
 @app.route("/load-list")
 @login_required
