@@ -306,26 +306,18 @@ function displayItems(data, shoppingListName, showStore) {
             .attr("data-store", item["store"])
             .append(displayItemName(item["name"], item["edited"]["name"], item["store"]));
 
+        var rightColumn = $("<div></div>")
+            .append(displayItemPrice(item["price"], item["edited"]["price"]));
         if ($("#shopping-list").attr("data-editable") === "true") {
-            var quantity = quantityButtons(
-                shoppingListName,
-                item["name"],
-                item["quantity"]);
-
-            itemElement
-                .attr("data-quantity", item["quantity"])
+            rightColumn
                 .append($("<div></div>")
-                    .append(displayItemPrice(item["price"], item["edited"]["price"]))
-                    .append($("<div></div>")
-                        .attr("style", "float: left; width: 10px")
-                        .html("&nbsp;"))
-                    .append($("<div></div>")
-                        .attr("style", "float: left")
-                        .attr("data-section", "quantity")
-                        .append(quantity)));
+                    .css("float", "left")
+                    .css("margin-left", "10px")
+                    .attr("data-section", "quantity")
+                    .append(quantityButtons(shoppingListName, item["name"], item["quantity"])));
         }
 
-        _itemListElement("items").append(itemElement);
+        _itemListElement("items").append(itemElement.append(rightColumn));
     }
 
     if (!showStore) {
