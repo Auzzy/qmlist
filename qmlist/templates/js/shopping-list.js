@@ -20,7 +20,6 @@ function loadShoppingList(shoppingListName) {
                             .addClass("justify-content-between")
                             .addClass("align-items-center")
                             .attr("data-name", item["name"])
-                            .attr("data-quantity", item["quantity"])
                             .append($("<div></div>")
                                 .addClass("text-truncate")
                                 .attr("style", "max-width: 93%")
