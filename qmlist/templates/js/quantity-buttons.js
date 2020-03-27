@@ -11,7 +11,9 @@ function decrButton(shoppingListName, itemName, itemQuantity) {
         .addClass("decr-btn")
         .click(function() {
             var decrBtn = $(this);
-            $.post("{{ url_for('decrement_item_count') }}", {"shopping-list": shoppingListName, "item-name": itemName})
+            var itemSku = $(this).parents("li[data-sku]").attr("data-sku");
+            var itemStore = $(this).parents("li[data-store]").attr("data-store");
+            $.post("{{ url_for('decrement_item_count') }}", {"shopping-list": shoppingListName, "sku": itemSku, "store": itemStore})
                 .done(function(data) {
                     if (data["quantity"] > 0) {
                         decrBtn.parents(".quantity-section").children(".quantity").text(data["quantity"]);
@@ -33,7 +35,9 @@ function incrButton(shoppingListName, itemName) {
         .addClass("incr-btn")
         .click(function() {
             var incrBtn = $(this);
-            $.post("{{ url_for('increment_item_count') }}", {"shopping-list": shoppingListName, "item-name": itemName})
+            var itemSku = $(this).parents("li[data-sku]").attr("data-sku");
+            var itemStore = $(this).parents("li[data-store]").attr("data-store");
+            $.post("{{ url_for('increment_item_count') }}", {"shopping-list": shoppingListName, "sku": itemSku, "store": itemStore})
                 .done(function(data) {
                     if (data["quantity"] > 0) {
                         incrBtn.parents(".quantity-section").children(".quantity").text(data["quantity"]);
