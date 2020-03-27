@@ -39,6 +39,8 @@ class ShoppingList(db.Model):
     rtmid = db.Column(db.Integer)
     isarchived = db.Column(db.Boolean, default=False)
 
+    products = db.relationship("Product", secondary="shopping_list_product", lazy="dynamic")
+
     @staticmethod
     def archived():
         return ShoppingList.query.filter_by(isarchived=True)
@@ -122,6 +124,17 @@ class Product(db.Model):
         else:
             self.price_min = value
             self.price_max = value
+
+class ShoppingListProduct(db.Model):
+    shopping_list_name = db.Column(db.String(255), db.ForeignKey('shopping_list.name'), primary_key=True)
+    sku = db.Column(db.String(32), primary_key=True)
+    store = db.Column(db.String(255), primary_key=True)
+    quantity = db.Column(db.Integer(), nullable=False)
+    product = db.relationship('Product', backref=db.backref('demand', lazy='dynamic'))
+    shopping_list = db.relationship('ShoppingList', backref=db.backref('inventory', lazy='dynamic', cascade="all, delete-orphan"))
+
+    __table_args__ = (db.ForeignKeyConstraint(['sku', 'store'], ['product.sku', 'product.store']),)
+
 
 qmlist.user_datastore = SQLAlchemyUserDatastore(db, User, Role)
 qmlist.security.init_app(qmlist.app, datastore=qmlist.user_datastore)

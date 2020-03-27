@@ -147,13 +147,22 @@ def load_shopping_list():
 @login_required
 def decrement_item_count():
     shopping_list_name = request.form["shopping-list"]
-    item_name = request.form.get("item-name")
+    sku = request.form.get("sku")
+    store = request.form.get("store")
+
+    # The product query is only needed to populate the name in the in memory shopping list below. It can be removed when that's removed.
+    product = model.Product.query.filter_by(sku=sku, store=store).one()
+    list_product = model.ShoppingListProduct.query.filter_by(product=product, shopping_list_name=shopping_list_name).one()
+    list_product.quantity -= 1
+    if list_product.quantity <= 0:
+        model.db.session.delete(list_product)
+    model.db.session.commit()
 
     shopping_list = get_shopping_list(shopping_list_name)
 
     quantity = 0
     if shopping_list.is_editable():
-        quantity = shopping_list.decrement_item(item_name)
+        quantity = shopping_list.decrement_item(product.name)
 
     return jsonify({"quantity": quantity})
 
@@ -161,13 +170,23 @@ def decrement_item_count():
 @login_required
 def increment_item_count():
     shopping_list_name = request.form["shopping-list"]
-    item_name = request.form.get("item-name")
+    sku = request.form.get("sku")
+    store = request.form.get("store")
+
+    # The product query is only needed to populate the name in the in memory shopping list below. It can be removed when that's removed.
+    product = model.Product.query.filter_by(sku=sku, store=store).one()
+    list_product = model.ShoppingListProduct.query.filter_by(product=product, shopping_list_name=shopping_list_name).first()
+    if list_product:
+        list_product.quantity += 1
+    else:
+        model.db.session.add(model.ShoppingListProduct(product=product, shopping_list_name=shopping_list_name, quantity=1))
+    model.db.session.commit()
 
     shopping_list = get_shopping_list(shopping_list_name)
 
     quantity = 0
     if shopping_list.is_editable():
-        quantity = shopping_list.increment_item(item_name)
+        quantity = shopping_list.increment_item(product.name)
 
     return jsonify({"quantity": quantity})
 
