@@ -45,19 +45,18 @@ def home():
 def _prepare_item_list(products_query, shopping_list_name, pageno, item_count):
     products_paginator = products_query.order_by(model.Product.name).paginate(pageno, item_count, False)
 
-    shopping_list = get_shopping_list(shopping_list_name) if shopping_list_name else None
     items_json = []
     for product in products_paginator.items:
-        item = shopping_list.get_item(product.name) if shopping_list else None
         edited = {
             "name": product.name != product.original_name,
             "price": product.price != product.original_price
         }
+        shopping_list_product = product.demand.filter_by(shopping_list_name=shopping_list_name).first()
         items_json.append({
             "sku": product.sku,
-            "name": item.name if item else product.name,
+            "name": product.name,
             "store": product.store,
-            "quantity": item.quantity if item else None,
+            "quantity": shopping_list_product.quantity if shopping_list_product else 0,
             "price": product.price,
             "edited": edited
         })
@@ -68,7 +67,7 @@ def _prepare_item_list(products_query, shopping_list_name, pageno, item_count):
     if products_paginator.has_prev:
         page_json["prev"] = pageno - 1
 
-    return jsonify({"items": items_json, "page": page_json, "total-results": products_query.count()})
+    return {"items": items_json, "page": page_json, "total-results": products_query.count()}
 
 @app.route("/search")
 @login_required
@@ -79,7 +78,7 @@ def search():
     item_count = int(request.args.get("item-count", 25))
 
     search_results = model.Product.active().filter(sqlalchemy.func.lower(model.Product.name).contains(search_term.lower()))
-    return _prepare_item_list(search_results, shopping_list_name, pageno, item_count)
+    return jsonify(_prepare_item_list(search_results, shopping_list_name, pageno, item_count))
 
 def _get_category_path(category):
     if category:
@@ -132,16 +131,17 @@ def browse_items_page():
         subcategory_ids = [subcategory.id for subcategory in _get_subcategories(current_category)]
         store_products_query = store_products_query.filter(model.Product.categoryid.in_(subcategory_ids))
 
-    return _prepare_item_list(store_products_query, shopping_list_name, pageno, item_count)
+    return jsonify(_prepare_item_list(store_products_query, shopping_list_name, pageno, item_count))
 
 @app.route("/load-list")
 @login_required
 def load_shopping_list():
     shopping_list_name = request.args["shopping-list"]
-    shopping_list = get_shopping_list(shopping_list_name)
 
-    sorted_items = sorted(shopping_list.get_items_json(), key=itemgetter("name"))
-    return jsonify({"shopping-list": sorted_items, "editable": shopping_list.is_editable(), "departure": shopping_list.departure})
+    shopping_list = model.ShoppingList.query.filter_by(name=shopping_list_name).one()
+    response_json = _prepare_item_list(shopping_list.products, shopping_list_name, 1, 1000)
+    response_json["editable"] = shopping_list.departure >= datetime.datetime.now().timestamp()
+    return jsonify(response_json)
 
 @app.route("/list/item/decr", methods=["POST"])
 @login_required
@@ -160,11 +160,10 @@ def decrement_item_count():
 
     shopping_list = get_shopping_list(shopping_list_name)
 
-    quantity = 0
     if shopping_list.is_editable():
-        quantity = shopping_list.decrement_item(product.name)
+        shopping_list.decrement_item(product.name)
 
-    return jsonify({"quantity": quantity})
+    return jsonify({"quantity": list_product.quantity if list_product else 0})
 
 @app.route("/list/item/incr", methods=["POST"])
 @login_required
@@ -179,16 +178,15 @@ def increment_item_count():
     if list_product:
         list_product.quantity += 1
     else:
-        model.db.session.add(model.ShoppingListProduct(product=product, shopping_list_name=shopping_list_name, quantity=1))
+        list_product = model.ShoppingListProduct(product=product, shopping_list_name=shopping_list_name, quantity=1)
+        model.db.session.add(list_product)
     model.db.session.commit()
 
     shopping_list = get_shopping_list(shopping_list_name)
-
-    quantity = 0
     if shopping_list.is_editable():
-        quantity = shopping_list.increment_item(product.name)
+        shopping_list.increment_item(product.name)
 
-    return jsonify({"quantity": quantity})
+    return jsonify({"quantity": list_product.quantity})
 
 @app.route("/admin")
 @login_required

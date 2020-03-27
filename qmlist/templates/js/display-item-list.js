@@ -308,7 +308,7 @@ function displayItems(data, shoppingListName, showStore) {
 
         var rightColumn = $("<div></div>")
             .append(displayItemPrice(item["price"], item["edited"]["price"]));
-        if ($("#shopping-list").attr("data-editable") === "true") {
+        if ($("#list-items").attr("data-editable") === "true") {
             rightColumn
                 .append($("<div></div>")
                     .css("float", "left")
