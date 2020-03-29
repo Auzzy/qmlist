@@ -34,8 +34,7 @@ class Department(db.Model):
     users = db.relationship("User", backref="department", lazy=True)
 
 class ShoppingList(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255), unique=True)
+    name = db.Column(db.String(255), primary_key=True)
     departure = db.Column(db.BigInteger)
     rtmid = db.Column(db.Integer)
     isarchived = db.Column(db.Boolean, default=False)
