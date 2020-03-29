@@ -7,7 +7,8 @@ class PersistentShoppingList(object):
     @staticmethod
     def load(name, id, departure, tags=[], client=None):
         client = client or rtmlib.connect()
-        
+
+        name = f"{name} (old)"
         items = [Item.load(client, rtm_item) for rtm_item in rtmlib.load_list_items(client, id) if not tags or rtm_item["tags"] == tags]
         return PersistentShoppingList(id, name, items, departure, tags, client)
 
@@ -15,6 +16,7 @@ class PersistentShoppingList(object):
     def get(name, departure, client=None):
         client = client or rtmlib.connect()
 
+        name = f"{name} (old)"
         list_ids = rtmlib.get_list_ids(client, name)
         if list_ids:
             return PersistentShoppingList.load(name, list_ids[0], departure, client=client)
@@ -25,6 +27,7 @@ class PersistentShoppingList(object):
     def create(name, departure, tags=[], client=None):
         client = client or rtmlib.connect()
 
+        name = f"{name} (old)"
         new_list = rtmlib.create_list(client, name)
 
         return PersistentShoppingList(new_list.id, name, [], departure, tags, client)
@@ -46,8 +49,9 @@ class PersistentShoppingList(object):
 
     @name.setter
     def name(self, value):
-        rtmlib.rename_list(self._client, self._id, value)
-        self._name = value
+        name = f"{value} (old)"
+        rtmlib.rename_list(self._client, self._id, name)
+        self._name = name
 
     def get_item(self, name):
         return self.items.get(name) if name in self.items else NewItem(self._client, self._id, name, self.tags)
