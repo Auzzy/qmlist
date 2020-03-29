@@ -15,18 +15,25 @@ function adminConsoleListControl(archiveView) {
                     });
             }));
     } else {
-        controlArea.append(faButton("fa", "fa-folder", {"size": "lg", "color": "blue", "margin-left": "15px", "float": "left"})
-            .click(function() {
-                var root = $(this).parents("li");
-                var listName = root.attr("data-shopping-list");
-                $.post("{{ url_for('archive_list') }}", {shopping_list: listName})
-                    .done(function(data) {
-                        root.remove();
-                        if ($("#list-tab").attr("data-list-name") === listName) {
-                            loadShoppingListTab(data["load"]);
-                        }
-                    });
-            }));
+        controlArea
+            .append(faButton("fa", "fa-cart-arrow-down", {"size": "lg", "color": "green", "margin-left": "15px", "float": "left"})
+                .click(function() {
+                    var root = $(this).parents("li");
+                    var listName = root.attr("data-shopping-list");
+                    $.post("{{ url_for('export_list') }}", {shopping_list: listName});
+                }))
+            .append(faButton("fa", "fa-folder", {"size": "lg", "color": "blue", "margin-left": "15px", "float": "left"})
+                .click(function() {
+                    var root = $(this).parents("li");
+                    var listName = root.attr("data-shopping-list");
+                    $.post("{{ url_for('archive_list') }}", {shopping_list: listName})
+                        .done(function(data) {
+                            root.remove();
+                            if ($("#list-tab").attr("data-list-name") === listName) {
+                                loadShoppingListTab(data["load"]);
+                            }
+                        });
+                }));
     }
 
     controlArea.append(faButton("fa", "fa-trash", {"size": "lg", "color": "red", "margin-left": " 5px", "float": "left"})

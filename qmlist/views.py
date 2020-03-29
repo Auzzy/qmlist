@@ -1,3 +1,4 @@
+import collections
 import datetime
 import itertools
 import os
@@ -11,6 +12,7 @@ from flask_security import current_user, login_required, roles_required
 from qmlist import model, qmlist
 from qmlist.qmlist import app
 from qmlist.shoppinglist import shoppinglist
+from qmlist.shoppinglist.rtm import rtmlib
 
 
 ITEM_PAGE_SIZE = 100
@@ -188,6 +190,41 @@ def increment_item_count():
 
     return jsonify({"quantity": list_product.quantity})
 
+def _export_list_to_rtm(shopping_list_name):
+    rtm_client = rtmlib.connect()
+
+    shopping_list = model.ShoppingList.query.filter_by(name=shopping_list_name).one()
+    if shopping_list.rtmid:
+        # Archive a list instead of deleting it since a deleted list's tasks go
+        # to the Inbox, meaning they still show up in tag filters.
+        rtmlib.archive_list(rtm_client, shopping_list.rtmid)
+        shopping_list.rtmid = None
+
+    rtm_list = rtmlib.create_list(rtm_client, shopping_list_name)
+    shopping_list.rtmid = rtm_list.id
+    model.db.session.commit()
+
+    get_shopping_list(shopping_list_name)._id = shopping_list.rtmid
+
+    inventory_dict = collections.defaultdict(list)
+    for entry in shopping_list.inventory:
+        tags = (entry.product.store.replace(" ", "-"),)
+        inventory_dict[tags].append(f"{entry.product.name} -- {entry.quantity}")
+
+    departure = datetime.datetime.fromtimestamp(shopping_list.departure)
+    for tags, entries in inventory_dict.items():
+        rtmlib.add_to_list(rtm_client, rtm_list.id, *list(sorted(entries)), due_date=departure, tags=tags)
+
+@app.route("/list/export", methods=["POST"])
+@login_required
+@roles_required("admin")
+def export_list():
+    shopping_list_name = request.form["shopping_list"]
+
+    _export_list_to_rtm(shopping_list_name)
+
+    return jsonify({})
+
 @app.route("/admin")
 @login_required
 @roles_required("admin")
@@ -348,7 +385,6 @@ def update_item_name():
 @login_required
 @roles_required("admin")
 def reset_item_name():
-    print(request.form)
     sku = request.form["sku"]
     store = request.form["store"]
 

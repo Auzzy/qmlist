@@ -140,6 +140,10 @@ def delete_list(rtm_client, list_id):
     timeline = rtm_client.rtm.timelines.create().timeline.value
     rtm_client.rtm.lists.delete(timeline=timeline, list_id=str(list_id))
 
+def archive_list(rtm_client, list_id):
+    timeline = rtm_client.rtm.timelines.create().timeline.value
+    rtm_client.rtm.lists.archive    (timeline=timeline, list_id=str(list_id))
+
 def _item_as_dict(taskseries, list_id):
     return {
         "id": taskseries.id,
