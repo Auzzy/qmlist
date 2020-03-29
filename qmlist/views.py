@@ -11,31 +11,10 @@ from flask_security import current_user, login_required, roles_required
 
 from qmlist import model, qmlist
 from qmlist.qmlist import app
-from qmlist.shoppinglist import shoppinglist
-from qmlist.shoppinglist.rtm import rtmlib
+from qmlist.rtm import rtmlib
 
 
-ITEM_PAGE_SIZE = 100
-_SHOPPING_LISTS = {}
 ALL_CATEGORY = "All"
-DEPARTURE_FORMAT = "%a %d-%b-%Y %H:%M"
-
-def get_shopping_list(name):
-    global _SHOPPING_LISTS
-
-    if name not in _SHOPPING_LISTS:
-        _SHOPPING_LISTS[name] = {}
-
-    if current_user.id not in _SHOPPING_LISTS[name]:
-        shopping_list_db = model.ShoppingList.active().filter_by(name=name).one()
-        tags = [current_user.department.tag] if current_user.department and current_user.department.tag else []
-        _SHOPPING_LISTS[name][current_user.id] = shoppinglist.PersistentShoppingList.load(
-            name, shopping_list_db.rtmid, shopping_list_db.departure, tags)
-    return _SHOPPING_LISTS[name][current_user.id]
-
-def delete_shopping_list(name):
-    if name in _SHOPPING_LISTS:
-        del _SHOPPING_LISTS[name]
 
 @app.route("/")
 @login_required
@@ -152,18 +131,11 @@ def decrement_item_count():
     sku = request.form.get("sku")
     store = request.form.get("store")
 
-    # The product query is only needed to populate the name in the in memory shopping list below. It can be removed when that's removed.
-    product = model.Product.query.filter_by(sku=sku, store=store).one()
-    list_product = model.ShoppingListProduct.query.filter_by(product=product, shopping_list_name=shopping_list_name).one()
+    list_product = model.ShoppingListProduct.query.filter_by(sku=sku, store=store, shopping_list_name=shopping_list_name).one()
     list_product.quantity -= 1
     if list_product.quantity <= 0:
         model.db.session.delete(list_product)
     model.db.session.commit()
-
-    shopping_list = get_shopping_list(shopping_list_name)
-
-    if shopping_list.is_editable():
-        shopping_list.decrement_item(product.name)
 
     return jsonify({"quantity": list_product.quantity if list_product else 0})
 
@@ -174,19 +146,13 @@ def increment_item_count():
     sku = request.form.get("sku")
     store = request.form.get("store")
 
-    # The product query is only needed to populate the name in the in memory shopping list below. It can be removed when that's removed.
-    product = model.Product.query.filter_by(sku=sku, store=store).one()
-    list_product = model.ShoppingListProduct.query.filter_by(product=product, shopping_list_name=shopping_list_name).first()
+    list_product = model.ShoppingListProduct.query.filter_by(sku=sku, store=store, shopping_list_name=shopping_list_name).first()
     if list_product:
         list_product.quantity += 1
     else:
-        list_product = model.ShoppingListProduct(product=product, shopping_list_name=shopping_list_name, quantity=1)
+        list_product = model.ShoppingListProduct(sku=sku, store=store, shopping_list_name=shopping_list_name, quantity=1)
         model.db.session.add(list_product)
     model.db.session.commit()
-
-    shopping_list = get_shopping_list(shopping_list_name)
-    if shopping_list.is_editable():
-        shopping_list.increment_item(product.name)
 
     return jsonify({"quantity": list_product.quantity})
 
@@ -203,8 +169,6 @@ def _export_list_to_rtm(shopping_list_name):
     rtm_list = rtmlib.create_list(rtm_client, shopping_list_name)
     shopping_list.rtmid = rtm_list.id
     model.db.session.commit()
-
-    get_shopping_list(shopping_list_name)._id = shopping_list.rtmid
 
     inventory_dict = collections.defaultdict(list)
     for entry in shopping_list.inventory:
@@ -275,16 +239,8 @@ def create_new_list():
     if model.ShoppingList.query.filter_by(name=name).first():
         return jsonify({"error": {"message": f"The list \"{name}\" already exists.", "field": "name"}}), 409
 
-    if name not in _SHOPPING_LISTS:
-        _SHOPPING_LISTS[name] = {}
-
-    if current_user.id not in _SHOPPING_LISTS[name]:
-        _SHOPPING_LISTS[name][current_user.id] = shoppinglist.PersistentShoppingList.get(name, departure_seconds)
-        if not _SHOPPING_LISTS[name][current_user.id]:
-            _SHOPPING_LISTS[name][current_user.id]= shoppinglist.PersistentShoppingList.create(name, departure_seconds)
-
-        model.db.session.add(model.ShoppingList(name=name, rtmid=_SHOPPING_LISTS[name][current_user.id]._id, departure=departure_seconds))
-        model.db.session.commit()
+    model.db.session.add(model.ShoppingList(name=name, departure=departure_seconds))
+    model.db.session.commit()
 
     return jsonify({"lists": _get_list_info_raw(False)})
 
@@ -297,13 +253,6 @@ def delete_list():
     # Delete from database
     model.db.session.delete(model.ShoppingList.query.filter_by(name=shopping_list_name).one())
     model.db.session.commit()
-
-    # Delete from RtM
-    shopping_list = get_shopping_list(shopping_list_name)
-    shopping_list.delete()
-
-    # Remove from memory
-    delete_shopping_list(shopping_list.name)
 
     next_list = model.ShoppingList.next()
     return jsonify({"lists": _get_list_info_raw(), "load": next_list.name if next_list else None})
@@ -353,12 +302,6 @@ def update_name():
     if model.ShoppingList.active().filter_by(name=new_name).first():
         return jsonify({"error": {"message": f"The list \"{new_name}\" already exists.", "field": "name"}}), 409
 
-    # Update name in memory and RtM
-    # Doing this first so if we need to hit the database, the old name is still used.
-    shopping_list = get_shopping_list(shopping_list_name)
-    shopping_list.name = new_name
-
-    # Update name in database
     model.ShoppingList.active().filter_by(name=shopping_list_name).one().name = new_name
     model.db.session.commit()
 
