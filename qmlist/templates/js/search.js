@@ -25,6 +25,7 @@ $("#search-box").keypress(function(event){
 
 $("#nav-tabs").on("show.bs.tab", function(event) {
     if ($(event.target).attr("id") === "search-tab") {
+        setShoppingListEditability($("#list-tab").attr("data-list-name"));
         $("#search-box").val("");
         $("#search-items").empty();
         resetItemPagination();

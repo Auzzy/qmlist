@@ -89,6 +89,7 @@ $("#nav-tabs").on("show.bs.tab", function(event) {
             $("#browse-items-prev").parent().addClass("disabled");
             $("#browse-items-first").parent().addClass("disabled");
 
+            setShoppingListEditability(shoppingListName);
             layoutCategories(1);
             browseItems(1);
             resetItemPagination();
