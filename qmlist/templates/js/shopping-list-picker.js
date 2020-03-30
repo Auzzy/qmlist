@@ -10,15 +10,16 @@ function setListTabName(shoppingListName) {
 function loadShoppingListTab(shoppingListName) {
     setListTabName(shoppingListName);
 
-    loadShoppingList(shoppingListName);
-
     if ($("#search-tab").hasClass("active")) {
-        var searchTerm = $("#search-results").attr("data-search-term");
-        if (searchTerm) {
-            search(shoppingListName, searchTerm, 1);
+        setShoppingListEditability(shoppingListName);
+        if ($("#search-box").val()) {
+            search(1);
         }
     } else if ($("#browse-rd-tab").hasClass("active") || $("#browse-bjs-tab").hasClass("active")) {
-        layoutItems();
+        setShoppingListEditability(shoppingListName);
+        browseItems(1);
+    } else if ($("#list-tab").hasClass("active")) {
+        loadShoppingList(shoppingListName);
     }
 }
 
