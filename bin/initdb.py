@@ -4,7 +4,7 @@ import json
 import os
 
 from qmlist import model, qmlist, views
-from qmlist.shoppinglist.rtm import rtmlib
+from qmlist.rtm import rtmlib
 
 
 def create_roles():
