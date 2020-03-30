@@ -23,7 +23,7 @@ function faButton(iconStyle, iconName, kwargs) {
         icon.css("float", kwargs["float"]);
     }
 
-    return $("<a></a>")
-        .attr("href", "#")
+   return $("<span></span>")
+        .css("cursor", "pointer")
         .append(icon);
 }
