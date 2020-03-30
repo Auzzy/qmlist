@@ -1,3 +1,17 @@
+function _shoppingListEditability(isEditable) {
+    $("#list-items").attr("data-editable", isEditable);
+}
+
+function setShoppingListEditability(shoppingListName) {
+    $.get("{{ url_for('load_shopping_list') }}", {"shopping-list": shoppingListName})
+        .done(function(data) {
+            _shoppingListEditability(data["editable"]);
+        })
+        .fail(function(jqXHR, textStatus) {
+            alert(textStatus);
+        });
+}
+
 function loadShoppingList(shoppingListName) {
     if (shoppingListName === undefined || shoppingListName === null) {
         $("#list-tab").addClass("disabled");
@@ -6,7 +20,7 @@ function loadShoppingList(shoppingListName) {
 
         $.get("{{ url_for('load_shopping_list') }}", {"shopping-list": shoppingListName})
             .done(function(data) {
-                $("#list-items").attr("data-editable", data["editable"]);
+                _shoppingListEditability(data["editable"]);
 
                 displayItems(data, shoppingListName, true);
             })
