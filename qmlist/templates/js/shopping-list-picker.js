@@ -7,8 +7,21 @@ function setListTabName(shoppingListName) {
     }
 }
 
+function setListTabEnabled(shoppingListName) {
+    if (shoppingListName === undefined || shoppingListName === null) {
+        $("#list-tab")
+            .addClass("disabled")
+            .css("cursor", "default");
+    } else {
+        $("#list-tab")
+            .removeClass("disabled")
+            .css("cursor", "pointer");
+    }
+}
+
 function loadShoppingListTab(shoppingListName) {
     setListTabName(shoppingListName);
+    setListTabEnabled(shoppingListName);
 
     if ($("#search-tab").hasClass("active")) {
         setShoppingListEditability(shoppingListName);

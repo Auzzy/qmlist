@@ -56,10 +56,10 @@
 {% include "js/shopping-list-picker.js" %}
 {% include "js/admin-console/list-management.js" %}
 
-loadShoppingListTab({% if default_list_name %}"{{ default_list_name }}"{% endif %});
-
 {% if is_admin %}
 $("#admin-console-tab").tab("show");
 {% endif %}
+
+loadShoppingListTab({% if default_list_name %}"{{ default_list_name }}"{% endif %});
 
 {% endblock %}
