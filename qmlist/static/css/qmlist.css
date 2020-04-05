@@ -44,6 +44,28 @@
     color: #e87c86 !important;
 }
 
+.btn-outline-success.collapsed {
+    border-color: #ade0b5;
+    color: #ade0b5;
+    background-color: transparent;
+}
+
+.btn-outline-success.collapsed:hover {
+    background-color: #ade0b5;
+    color: white;
+}
+
+.btn-outline-danger.collapsed {
+    border-color: #f5b5bb;
+    color: #f5b5bb;
+    background-color: transparent;
+}
+
+.btn-outline-danger.collapsed:hover {
+    background-color: #f5b5bb;
+    color: white;
+}
+
 /* For the datetime picker */
 .dtp .btn {
     font-size: 14px;

@@ -73,7 +73,7 @@ def _get_store_categories_query(current_category, store_name):
             return current_category.children
         elif current_category.parent:
             return current_category.parent.children
-    return model.Categories.query.filter_by(store=store_name, parentid=None)
+    return model.Categories.enabled().filter_by(store=store_name, parentid=None)
 
 @app.route("/browse/stores")
 @login_required
@@ -81,7 +81,7 @@ def browse_stores():
     store_name = request.args["storeName"]
     category = request.args.get("category", ALL_CATEGORY)
 
-    current_category = model.Categories.query.filter_by(store=store_name, name=category).one() if category != ALL_CATEGORY else None
+    current_category = model.Categories.enabled().filter_by(store=store_name, name=category).one() if category != ALL_CATEGORY else None
     current_category_path = [ALL_CATEGORY] + [category.name for category in _get_category_path(current_category)]
 
     store_categories_query = _get_store_categories_query(current_category, store_name).order_by(model.Categories.name)
@@ -107,7 +107,7 @@ def browse_items_page():
 
     store_products_query = model.Product.active().filter_by(store=store_name)
     if category_name != ALL_CATEGORY:
-        current_category = model.Categories.query.filter_by(store=store_name, name=category_name).one()
+        current_category = model.Categories.enabled().filter_by(store=store_name, name=category_name).one()
 
         subcategory_ids = [subcategory.id for subcategory in _get_subcategories(current_category)]
         store_products_query = store_products_query.filter(model.Product.categoryid.in_(subcategory_ids))
@@ -397,3 +397,61 @@ def reset_item_price():
         return jsonify({"error": {"message": f"Could not find product to update. SKU: {sku}, store: {store}", "field": "name"}}), 404
 
     return jsonify({"price": product.price})
+
+@app.route("/admin/categories/load")
+@login_required
+@roles_required("admin")
+def load_subcategories():
+    store_name = request.args["store"]
+    category_name = request.args.get("category")
+
+    if category_name:
+        subcategories = model.Categories.query.filter_by(store=store_name, name=category_name).one().children
+    else:
+        subcategories = model.Categories.query.filter_by(store=store_name, parent=None).all()
+
+    subcategory_info = []
+    for subcategory in subcategories:
+        subcategory_info.append({
+            "name": subcategory.name,
+            "enabled": subcategory.isenabled,
+            "hasChildren": bool(subcategory.children.count())
+        })
+
+    return jsonify({"subcategories": subcategory_info})
+
+def _set_category_tree_enabled(category, enabled):
+    category.isenabled = enabled
+    for subcategory in category.children:
+        _set_category_tree_enabled(subcategory, enabled)
+
+@app.route("/admin/categories/enable", methods=["POST"])
+@login_required
+@roles_required("admin")
+def category_enable():
+    store_name = request.form["store"]
+    category_name = request.form["category"]
+    propagate = request.form.get("propagate") == "true"
+
+    category = model.Categories.query.filter_by(store=store_name, name=category_name).one()
+    if not category.parent or category.parent.isenabled:
+        if propagate:
+            _set_category_tree_enabled(category, True)
+        else:
+            category.isenabled = True
+        model.db.session.commit()
+
+    return jsonify({})
+
+@app.route("/admin/categories/disable", methods=["POST"])
+@login_required
+@roles_required("admin")
+def category_disable():
+    store_name = request.form["store"]
+    category_name = request.form["category"]
+
+    category = model.Categories.query.filter_by(store=store_name, name=category_name).one()
+    _set_category_tree_enabled(category, False)
+    model.db.session.commit()
+
+    return jsonify({})
