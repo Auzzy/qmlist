@@ -69,6 +69,15 @@ class Categories(db.Model):
     parentid = db.Column(db.Integer, db.ForeignKey("categories.id"))
     children = db.relationship('Categories', backref=db.backref('parent', remote_side=id), lazy="dynamic")
     products = db.relationship('Product', backref='category', lazy=True)
+    isenabled = db.Column(db.Boolean, default=True)
+
+    @staticmethod
+    def enabled():
+        return Categories.query.filter_by(isenabled=True)
+
+    @staticmethod
+    def disabled():
+        return Categories.query.filter_by(isenabled=False)
 
 class Product(db.Model):
     sku = db.Column(db.String(32), primary_key=True)
