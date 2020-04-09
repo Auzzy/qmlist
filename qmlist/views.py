@@ -455,3 +455,36 @@ def category_disable():
     model.db.session.commit()
 
     return jsonify({})
+
+def _get_users_info():
+    user_info = [{"name": user.name, "email": user.email} for user in model.User.query.all()]
+    return user_info
+
+@app.route("/admin/users/get")
+@login_required
+@roles_required("admin")
+def get_user_info():
+    return jsonify({"users": _get_users_info()})
+
+@app.route("/admin/users/create", methods=["POST"])
+@login_required
+@roles_required("admin")
+def create_new_user():
+    name = request.form["name"]
+    email = request.form["email"]
+
+    model.db.session.add(model.User(name=name, email=email))
+    model.db.session.commit()
+
+    return jsonify({"users": _get_users_info()})
+
+@app.route("/admin/users/delete", methods=["DELETE"])
+@login_required
+@roles_required("admin")
+def delete_user():
+    email = request.form["email"]
+
+    model.db.session.delete(model.User.query.filter_by(email=email).one())
+    model.db.session.commit()
+
+    return jsonify({"users": _get_users_info()})
