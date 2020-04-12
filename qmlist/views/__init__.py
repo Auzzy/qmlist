@@ -4,8 +4,8 @@ from flask_security import current_user, login_required
 from qmlist import model
 from qmlist.qmlist import app
 
+import qmlist.views.admin_console
 from qmlist.views import makelist
-
 
 @app.route("/")
 @login_required
