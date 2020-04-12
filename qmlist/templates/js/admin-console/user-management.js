@@ -26,7 +26,7 @@ function adminConsoleUserControl() {
     return controlArea;
 }
 
-function adminConsoleDisplayUserName(email, name) {
+function adminConsoleDisplayUserName(email, name, role) {
     var nameArea = $("<div></div>")
         .attr("data-section", "name");
 
@@ -35,8 +35,16 @@ function adminConsoleDisplayUserName(email, name) {
             .attr("data-sub-section", "display")
             .attr("data-email", email)
             .attr("data-name", name)
+            .attr("data-role", role)
             .css("float", "left")
-            .text(name !== null && name !== undefined ? `${name} <${email}>` : email));
+            .text(name ? `${name} <${email}>` : email)
+            .append($("<span></span>")
+                .css("font-style", "italic")
+                .css("font-size", "75%")
+                .css("vertical-align", "middle")
+                .css("color", "gray")
+                .css("margin-left", "5px")
+                .text(role)));
 
     nameArea.append(faButton("fa", "fa-edit", {"color": "darkorange", "margin-left": "5px", "float": "left"})
         .attr("data-sub-section", "edit-button")
@@ -67,7 +75,8 @@ function adminConsoleDisplayUsers(rootElementId, users) {
                 .addClass("align-items-center")
                 .attr("data-email", user_info["email"])
                 .attr("data-name", user_info["name"])
-                .append(adminConsoleDisplayUserName(user_info["email"], user_info["name"]))
+                .attr("data-role", user_info["role"])
+                .append(adminConsoleDisplayUserName(user_info["email"], user_info["name"], user_info["role"]))
                 .append($("<div></div>")
                     .append(adminConsoleUserControl())));
     });
@@ -83,7 +92,10 @@ function attachModifyUserHandler(endpoint) {
                 event.stopPropagation();
                 form.addClass("was-validated");
             } else {
-                $.post(endpoint, {name: $("#modify-user-name").val(), email: $("#modify-user-email").val()})
+                var name = $("#modify-user-name").val();
+                var email = $("#modify-user-email").val();
+                var role = $("#modify-user-role").val();
+                $.post(endpoint, {name: name, email: email, role: role})
                     .done(function(data) {
                         adminConsoleDisplayUsers("admin-console-list-of-users", data["users"]);
                         $(".server-feedback").remove();
@@ -124,6 +136,27 @@ $("#admin-console-users-tab").on("show.bs.tab", function() {
     $.get("{{ url_for('get_user_info') }}")
         .done(function(data) {
             adminConsoleDisplayUsers("admin-console-list-of-users", data["users"]);
+        });
+});
+
+$("#modify-user-modal").on("show.bs.modal", function(event) {
+    $("#modify-user-role").empty();
+
+    var selectedRole = $(event.relatedTarget).parents("[data-role]").attr("data-role");
+    $.get("{{ url_for('get_roles') }}")
+        .done(function(data) {
+            selectedRole = selectedRole || data["default"];
+            data["roles"].forEach(role => {
+                var roleEntry = $("<option></option>")
+                    .attr("value", role)
+                    .text(role);
+
+                if (role === selectedRole) {
+                    roleEntry.attr("selected", "");
+                }
+
+                $("#modify-user-role").append(roleEntry);
+            });
         });
 });
 
