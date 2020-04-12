@@ -48,7 +48,11 @@ def edit_user():
 def delete_user():
     email = request.form["email"]
 
-    model.db.session.delete(model.User.query.filter_by(email=email).one())
+    user = model.User.query.filter_by(email=email).one()
+    if user.has_role("root"):
+        return jsonify({"error": {"message": f"Cannot delete that user.", "field": "name"}}), 409
+
+    model.db.session.delete(user)
     model.db.session.commit()
 
     return jsonify({"users": utils.get_users_info()})

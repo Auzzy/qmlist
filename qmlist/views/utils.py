@@ -48,11 +48,10 @@ def get_list_info_raw(archived=None):
     return list_info
 
 def get_users_info(email=None):
-    if email:
-        user = model.User.query.filter_by(email=email).one()
-        return [{"name": user.name, "email": user.email}]
-    else:
-        return [{"name": user.name, "email": user.email} for user in model.User.query.all()]
+    def _user_info(user):
+        return {"name": user.name, "email": user.email}
+    user_query = model.User.query.filter_by(email=email) if email else model.User.query
+    return [_user_info(user) for user in user_query.all() if not user.has_role("root")]
 
 def get_category_path(category):
     if category:
