@@ -10,6 +10,7 @@ from qmlist.rtm import rtmlib
 def create_roles():
     model.db.session.add(model.Role(name="user", description="A regular user. This is the default role."))
     model.db.session.add(model.Role(name="admin", description="User with access to change the system."))
+    model.db.session.add(model.Role(name="root", description="Immutable user. Has absolute power."))
 
     model.db.session.commit()
 
@@ -20,16 +21,18 @@ def create_departments():
     model.db.session.commit()
 
 def create_users():
+    user_role = model.Role.query.filter_by(name="user").one()
+
     user1 = qmlist.user_datastore.create_user(email='foo@netscape.net', password='password')
     user1.departmentid = model.Department.query.filter_by(name="Test").one().id
-    user1.roles.append(model.Role.query.filter_by(name="user").one())
+    user1.roles.append(user_role)
 
     user2 = qmlist.user_datastore.create_user(email='bar@netscape.net', password='password')
     user2.departmentid = model.Department.query.filter_by(name="HQ").one().id
-    user2.roles.append(model.Role.query.filter_by(name="user").one())
+    user2.roles.append(user_role)
 
     admin = qmlist.user_datastore.create_user(email=os.environ["ADMIN_USER"], password=os.environ["ADMIN_PASSWORD"])
-    admin.roles.append(model.Role.query.filter_by(name="admin").one())
+    admin.roles.extend(model.Role.query.filter(model.Role.name.in_(["admin", "root"])).all())
 
     model.db.session.commit()
 
