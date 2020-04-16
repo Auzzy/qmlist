@@ -44,7 +44,12 @@ function adminConsoleDisplayUserName(email, name) {
         .attr("data-target", "#modify-user-modal"))
         .click(function() {
             $("#modify-user-name").val(nameArea.children("[data-name]").attr("data-name"));
-            $("#modify-user-email").val(nameArea.children("[data-email]").attr("data-email"));
+            $("#modify-user-email")
+                .val(nameArea.children("[data-email]").attr("data-email"))
+                .attr("readonly", "")
+                .removeClass("form-control")
+                .addClass("form-control-plaintext");
+            attachModifyUserHandler("{{ url_for('edit_user') }}");
         });
 
     return nameArea;
@@ -68,6 +73,53 @@ function adminConsoleDisplayUsers(rootElementId, users) {
     });
 }
 
+function attachModifyUserHandler(endpoint) {
+    $("#modify-user-save")
+        .off("click.modify-user")
+        .on("click.modify-user", function(event) {
+            var form = $("#modify-user-form");
+            if (form.get(0).checkValidity() === false) {
+                event.preventDefault();
+                event.stopPropagation();
+                form.addClass("was-validated");
+            } else {
+                $.post(endpoint, {name: $("#modify-user-name").val(), email: $("#modify-user-email").val()})
+                    .done(function(data) {
+                        adminConsoleDisplayUsers("admin-console-list-of-users", data["users"]);
+                        $(".server-feedback").remove();
+                        $("#modify-user-name ~ .invalid-feedback").css("display", "");
+                        $("#modify-user-name").removeClass("is-invalid").val("");
+                        $("#modify-user-email ~ .invalid-feedback").css("display", "");
+                        $("#modify-user-email").removeClass("is-invalid").val("");
+
+                        $("#modify-user-modal").modal("hide");
+                    })
+                    .fail(function(data) {
+                        var error = data["responseJSON"]["error"];
+                        form.removeClass("was-validated");
+                        if (["name", "email"].includes(error["field"])) {
+                            var fieldId = error["field"] === "name" ? "modify-user-name" : "modify-user-email";
+                            $(`#${fieldId} ~ .invalid-feedback`).css("display", "none");
+                            $(`#${fieldId}`)
+                                .addClass("is-invalid")
+                                .after($("<div></div>")
+                                    .addClass("server-feedback")
+                                    .addClass("invalid-feedback")
+                                    .text(error["message"]));
+                        }
+                    });
+            }
+        });
+}
+
+$("#create-user-button").click(function() {
+    attachModifyUserHandler("{{ url_for('create_new_user') }}");
+    $("#modify-user-email")
+        .removeAttr("readonly")
+        .removeClass("form-control-plaintext")
+        .addClass("form-control");
+});
+
 $("#admin-console-users-tab").on("show.bs.tab", function() {
     $.get("{{ url_for('get_user_info') }}")
         .done(function(data) {
@@ -79,39 +131,4 @@ $("#modify-user-cancel").click(function() {
     $("#modify-user-form").removeClass("was-validated");
     $("#modify-user-name").val("");
     $("#modify-user-email").val("");
-});
-
-$("#modify-user-save").click(function(event) {
-    var form = $("#modify-user-form");
-    if (form.get(0).checkValidity() === false) {
-        event.preventDefault();
-        event.stopPropagation();
-        form.addClass("was-validated");
-    } else {
-        $.post("{{ url_for('create_new_user') }}", {name: $("#modify-user-name").val(), email: $("#modify-user-email").val()})
-            .done(function(data) {
-                adminConsoleDisplayUsers("admin-console-list-of-users", data["users"]);
-                $(".server-feedback").remove();
-                $("#modify-user-name ~ .invalid-feedback").css("display", "");
-                $("#modify-user-name").removeClass("is-invalid").val("");
-                $("#modify-user-email ~ .invalid-feedback").css("display", "");
-                $("#modify-user-email").removeClass("is-invalid").val("");
-
-                $("#modify-user-modal").modal("hide");
-            })
-            .fail(function(data) {
-                var error = data["responseJSON"]["error"];
-                form.removeClass("was-validated");
-                if (["name", "email"].includes(error["field"])) {
-                    var fieldId = error["field"] === "name" ? "modify-user-name" : "modify-user-email";
-                    $(`#${fieldId} ~ .invalid-feedback`).css("display", "none");
-                    $(`#${fieldId}`)
-                        .addClass("is-invalid")
-                        .after($("<div></div>")
-                            .addClass("server-feedback")
-                            .addClass("invalid-feedback")
-                            .text(error["message"]));
-                }
-            });
-    }
 });
