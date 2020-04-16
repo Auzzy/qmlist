@@ -2,7 +2,7 @@ from flask import jsonify, request
 from flask_security import login_required, roles_required
 
 from qmlist import model
-from qmlist.qmlist import app
+from qmlist.qmlist import app, user_datastore
 from qmlist.views import utils
 
 @app.route("/admin/users/get")
@@ -15,10 +15,29 @@ def get_user_info():
 @login_required
 @roles_required("admin")
 def create_new_user():
-    name = request.form["name"]
     email = request.form["email"]
+    name = request.form.get("name")
 
-    model.db.session.add(model.User(name=name, email=email))
+    if model.User.query.filter_by(email=email).first():
+        return jsonify({"error": {"message": f"A user with the email \"{email}\" already exists.", "field": "email"}}), 409
+
+    user_datastore.create_user(name=name, email=email, password='password')
+    model.db.session.commit()
+
+    return jsonify({"users": utils.get_users_info()})
+
+@app.route("/admin/users/edit", methods=["POST"])
+@login_required
+@roles_required("admin")
+def edit_user():
+    email = request.form["email"]
+    name = request.form.get("name")
+
+    user = model.User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": {"message": f"No user with the email \"{email}\" found.", "field": "email"}}), 409
+
+    user.name = name
     model.db.session.commit()
 
     return jsonify({"users": utils.get_users_info()})
