@@ -24,15 +24,15 @@ class User(db.Model, UserMixin):
     password = db.Column(db.String(255))
     active = db.Column(db.Boolean())
     confirmed_at = db.Column(db.DateTime())
+    departmentid = db.Column(db.Integer, db.ForeignKey("department.id"))
     roles = db.relationship('Role', secondary=roles_users,
                             backref=db.backref('users', lazy='dynamic'))
-    departmentid = db.Column(db.Integer, db.ForeignKey("department.id"))
 
 class Department(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(255))
-    tag = db.Column(db.String(255))
+    name = db.Column(db.String(255), unique=True)
     users = db.relationship("User", backref="department", lazy=True)
+    lists = db.relationship("ShoppingList", backref="department", lazy=True)
 
 class ShoppingList(db.Model):
     name = db.Column(db.String(255), primary_key=True)
@@ -40,6 +40,7 @@ class ShoppingList(db.Model):
     rtmid = db.Column(db.Integer)
     isarchived = db.Column(db.Boolean, default=False)
 
+    departmentid = db.Column(db.Integer, db.ForeignKey("department.id"))
     products = db.relationship("Product", secondary="shopping_list_product", lazy="dynamic")
 
     @staticmethod
