@@ -53,6 +53,17 @@ def get_users_info(email=None):
     user_query = model.User.query.filter_by(email=email) if email else model.User.query
     return [_user_info(user) for user in user_query.all() if not user.has_role("root")]
 
+def get_departments_info(name=None):
+    def _department_info(department):
+        return {
+            "id": department.id,
+            "name": department.name,
+            "users": [user.email for user in department.users],
+            "lists": [shopping_list.name for shopping_list in department.lists]
+        }
+    department_query = model.Department.query.filter_by(name=name) if name else model.Department.query
+    return [_department_info(department) for department in department_query.all()]
+
 def get_category_path(category):
     if category:
         return get_category_path(category.parent) + [category]

@@ -15,8 +15,8 @@ def create_roles():
     model.db.session.commit()
 
 def create_departments():
-    model.db.session.add(model.Department(name="Test", tag="foo"))
-    model.db.session.add(model.Department(name="HQ", tag="hq"))
+    model.db.session.add(model.Department(name="Test"))
+    model.db.session.add(model.Department(name="HQ"))
 
     model.db.session.commit()
 

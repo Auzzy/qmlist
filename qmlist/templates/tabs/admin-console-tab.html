@@ -11,6 +11,9 @@
     <li class="nav-item">
         <a class="nav-link" id="admin-console-users-tab" data-toggle="tab" href="#admin-console-users" role="tab" aria-controls="admin-console-users" aria-selected="true">Users</a>
     </li>
+    <li class="nav-item">
+        <a class="nav-link" id="admin-console-departments-tab" data-toggle="tab" href="#admin-console-departments" role="tab" aria-controls="admin-console-departments" aria-selected="true">Departments</a>
+    </li>
 </ul>
 <div class="tab-content mt-2" id="admin-console-nav-tabs-content">
     <div class="tab-pane show active" id="admin-console-lists" role="tabpanel" aria-labelledby="admin-console-lists-tab">
@@ -24,5 +27,8 @@
     </div>
     <div class="tab-pane" id="admin-console-users" role="tabpanel" aria-labelledby="admin-console-users-tab">
         {% include "tabs/admin-console-tabs/users-tab.html" %}
+    </div>
+    <div class="tab-pane" id="admin-console-departments" role="tabpanel" aria-labelledby="admin-console-departments-tab">
+        {% include "tabs/admin-console-tabs/departments-tab.html" %}
     </div>
 </div>
