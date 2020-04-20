@@ -49,7 +49,13 @@ def get_list_info_raw(archived=None):
 
 def get_users_info(email=None):
     def _user_info(user):
-        return {"name": user.name, "email": user.email, "role": user.roles[0].name}
+        department = user.department
+        return {
+            "name": user.name,
+            "email": user.email,
+            "role": user.roles[0].name,
+            "department": department.name if department else None
+        }
     user_query = model.User.query.filter_by(email=email) if email else model.User.query
     return [_user_info(user) for user in user_query.all() if not user.has_role("root")]
 
