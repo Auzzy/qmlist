@@ -17,13 +17,15 @@ def get_user_info():
 def create_new_user():
     email = request.form["email"]
     name = request.form.get("name")
-    role = request.form["role"]
+    role_name = request.form["role"]
+    department_name = request.form.get("department")
 
     if model.User.query.filter_by(email=email).first():
         return jsonify({"error": {"message": f"A user with the email \"{email}\" already exists.", "field": "email"}}), 409
 
-    role = model.Role.query.filter_by(name=role).one()
-    user_datastore.create_user(name=name, email=email, password='password', roles=[role])
+    role = model.Role.query.filter_by(name=role_name).one()
+    department = model.Department.query.filter_by(name=department_name).first()
+    user_datastore.create_user(name=name, email=email, password='password', roles=[role], department=department)
     model.db.session.commit()
 
     return jsonify({"users": utils.get_users_info()})
@@ -34,14 +36,16 @@ def create_new_user():
 def edit_user():
     email = request.form["email"]
     name = request.form.get("name")
-    role = request.form.get("role")
+    role_name = request.form.get("role")
+    department_name = request.form.get("department")
 
     user = model.User.query.filter_by(email=email).first()
     if not user:
         return jsonify({"error": {"message": f"No user with the email \"{email}\" found.", "field": "email"}}), 409
 
     user.name = name
-    user.roles = [model.Role.query.filter_by(name=role).one()]
+    user.roles = [model.Role.query.filter_by(name=role_name).one()]
+    user.department = model.Department.query.filter_by(name=department_name).first()
     model.db.session.commit()
 
     return jsonify({"users": utils.get_users_info()})

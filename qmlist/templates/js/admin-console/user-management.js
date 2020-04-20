@@ -26,9 +26,10 @@ function adminConsoleUserControl() {
     return controlArea;
 }
 
-function adminConsoleDisplayUserName(email, name, role) {
+function adminConsoleDisplayUserName(email, name, role, department) {
     var nameArea = $("<div></div>")
-        .attr("data-section", "name");
+        .attr("data-section", "name")
+        .css("float", "left");
 
     nameArea
         .append($("<div></div>")
@@ -36,6 +37,7 @@ function adminConsoleDisplayUserName(email, name, role) {
             .attr("data-email", email)
             .attr("data-name", name)
             .attr("data-role", role)
+            .attr("data-department", department)
             .css("float", "left")
             .text(name ? `${name} <${email}>` : email)
             .append($("<span></span>")
@@ -63,23 +65,39 @@ function adminConsoleDisplayUserName(email, name, role) {
     return nameArea;
 }
 
+function adminConsoleDisplayUsersDepartment(department) {
+    var departmentDisplay = $("<div></div>")
+        .css("font-size", "75%")
+        .css("font-style", "italic")
+        .css("color", "gray");
+    
+    if (department !== undefined && department !== null && department !== "") {
+        departmentDisplay.text(`Department: ${department}`);
+    }
+    return departmentDisplay;
+}
+
 function adminConsoleDisplayUsers(rootElementId, users) {
     $(`#${rootElementId}`).empty();
-    users.sort((first, second) => first["email"] - second["email"]);
-    users.forEach(user_info => {
-        $(`#${rootElementId}`)
-            .append($("<li></li>")
-                .addClass("list-group-item")
-                .addClass("d-flex")
-                .addClass("justify-content-between")
-                .addClass("align-items-center")
-                .attr("data-email", user_info["email"])
-                .attr("data-name", user_info["name"])
-                .attr("data-role", user_info["role"])
-                .append(adminConsoleDisplayUserName(user_info["email"], user_info["name"], user_info["role"]))
-                .append($("<div></div>")
-                    .append(adminConsoleUserControl())));
-    });
+    users
+        .sort((first, second) => first["email"].localeCompare(second["email"]))
+        .forEach(user_info => {
+            $(`#${rootElementId}`)
+                .append($("<li></li>")
+                    .addClass("list-group-item")
+                    .attr("data-email", user_info["email"])
+                    .attr("data-name", user_info["name"])
+                    .attr("data-role", user_info["role"])
+                    .attr("data-department", user_info["department"])
+                    .append($("<div></div>")
+                        .addClass("d-flex")
+                        .addClass("justify-content-between")
+                        .addClass("align-items-center")
+                        .append(adminConsoleDisplayUserName(
+                            user_info["email"], user_info["name"], user_info["role"], user_info["department"]))
+                        .append(adminConsoleUserControl()))
+                    .append(adminConsoleDisplayUsersDepartment(user_info["department"])));
+        });
 }
 
 function attachModifyUserHandler(endpoint) {
@@ -95,7 +113,8 @@ function attachModifyUserHandler(endpoint) {
                 var name = $("#modify-user-name").val();
                 var email = $("#modify-user-email").val();
                 var role = $("#modify-user-role").val();
-                $.post(endpoint, {name: name, email: email, role: role})
+                var department = $("#modify-user-department").val();
+                $.post(endpoint, {name: name, email: email, role: role, department: department})
                     .done(function(data) {
                         adminConsoleDisplayUsers("admin-console-list-of-users", data["users"]);
                         $(".server-feedback").remove();
@@ -141,6 +160,7 @@ $("#admin-console-users-tab").on("show.bs.tab", function() {
 
 $("#modify-user-modal").on("show.bs.modal", function(event) {
     $("#modify-user-role").empty();
+    $("#modify-user-department").empty();
 
     var selectedRole = $(event.relatedTarget).parents("[data-role]").attr("data-role");
     $.get("{{ url_for('get_roles') }}")
@@ -157,6 +177,32 @@ $("#modify-user-modal").on("show.bs.modal", function(event) {
 
                 $("#modify-user-role").append(roleEntry);
             });
+        });
+
+    var selectedDepartment = $(event.relatedTarget).parents("[data-department]").attr("data-department");
+    $.get("{{ url_for('get_department_info') }}")
+        .done(function(data) {
+            var noDepartmentOption = $("<option></option>")
+                .attr("value", "")
+                .text("<no department>");
+            $("#modify-user-department").append(noDepartmentOption);
+
+            if (selectedDepartment === undefined) {
+                noDepartmentOption.attr("selected", "");
+            }
+            data["departments"]
+                .sort((dept1, dept2) => dept1["name"].localeCompare(dept2["name"]))
+                .forEach(department => {
+                    var departmentEntry = $("<option></option>")
+                        .attr("value", department["name"])
+                        .text(department["name"]);
+
+                    if (department["name"] === selectedDepartment) {
+                        departmentEntry.attr("selected", "");
+                    }
+
+                    $("#modify-user-department").append(departmentEntry);
+                });
         });
 });
 
