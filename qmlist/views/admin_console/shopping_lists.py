@@ -29,11 +29,13 @@ def get_active_list_info():
 def create_new_list():
     name = request.form["name"]
     departure_seconds = int(request.form["departureSeconds"])
+    department_name = request.form.get("department")
     
     if model.ShoppingList.query.filter_by(name=name).first():
         return jsonify({"error": {"message": f"The list \"{name}\" already exists.", "field": "name"}}), 409
 
-    model.db.session.add(model.ShoppingList(name=name, departure=departure_seconds))
+    department = model.Department.query.filter_by(name=department_name).first()
+    model.db.session.add(model.ShoppingList(name=name, departure=departure_seconds, department=department))
     model.db.session.commit()
 
     return jsonify({"lists": utils.get_list_info_raw(False)})
@@ -100,6 +102,20 @@ def update_name():
     model.db.session.commit()
 
     return jsonify({"name": new_name})
+
+@app.route("/admin/lists/department", methods=["POST"])
+@login_required
+@roles_required("admin")
+def update_department():
+    shopping_list_name = request.form["shopping_list"]
+    department_name = request.form.get("department")
+
+    shopping_list = model.ShoppingList.active().filter_by(name=shopping_list_name).one()
+    department = model.Department.query.filter_by(name=department_name).first()
+    shopping_list.department = department
+    model.db.session.commit()
+
+    return jsonify({"department": department_name})
 
 @app.route("/list/export", methods=["POST"])
 @login_required

@@ -63,6 +63,84 @@ function adminConsoleListControl(archiveView) {
     return controlArea;
 }
 
+function adminConsoleDisplayListDepartment(department) {
+    var departmentName = department || "<no department>";
+    var departmentArea = $("<div></div>")
+        .attr("data-section", "department")
+        .append($("<div></div>")
+            .attr("data-sub-section", "display")
+            .attr("data-department", department)
+            .css("font-style", "italic")
+            .css("color", "gray")
+            .css("float", "left")
+            .text(`Department: ${departmentName}`))
+        .append(faButton("fa", "fa-edit", {"color": "darkorange", "margin-left": "5px", "float": "left"})
+            .attr("data-sub-section", "edit-button")
+            .click(function() {
+                var root = $(this).parents("[data-section='department']");
+                root.children("form").css("display", "inline-block");
+                root.children("[data-sub-section='display']").css("display", "none");
+                root.children("[data-sub-section='edit-button']").css("display", "none");
+
+                root.find("form select").empty();
+
+                var selectedDepartment = root.children("[data-department]").attr("data-department");
+                $.get("{{ url_for('get_department_info') }}")
+                    .done(function(data) {
+                        var noDepartmentOption = $("<option></option>")
+                            .attr("value", "")
+                            .text("<no department>");
+                        root.find("form select").append(noDepartmentOption);
+
+                        if (selectedDepartment === undefined) {
+                            noDepartmentOption.attr("selected", "");
+                        }
+
+                        data["departments"]
+                            .sort((dept1, dept2) => dept1["name"].localeCompare(dept2["name"]))
+                            .forEach(department => {
+                                var option = $("<option></option>")
+                                    .attr("value", department["name"])
+                                    .text(department["name"]);
+
+                                if (department["name"] === selectedDepartment) {
+                                    option.attr("selected", "");
+                                }
+
+                                root.find("form select").append(option);
+                            });
+                    });
+            }));
+
+    departmentArea
+        .append($("<form></form>")
+            .css("display", "none")
+            .addClass("form-inline")
+            .css("margin-bottom", "0px")
+            .attr("action", "")
+            .append($("<select></select>")
+                .addClass("custom-select")
+                .css("float", "left"))
+            .change(function() {
+                var root = $(this).parents("[data-section='department']");
+                var form = root.children("form");
+                var shoppingList = $(this).parents("li").find("[data-section='name'] [data-sub-section='display']").attr("data-shopping-list");
+                $.post("{{ url_for('update_department') }}", {shopping_list: shoppingList, department: form.children("select").val()})
+                    .done(data => {
+                        var departmentName = data["department"] === undefined || data["department"] === "" ? "<no department>" : data["department"];
+                        root.children("form").css("display", "none");
+                        root.children("[data-sub-section='display']")
+                            .css("display", "block")
+                            .attr("data-department", data["department"])
+                            .text(`Department: ${departmentName}`);
+                        root.children("[data-sub-section='edit-button']").css("display", "inline-block");
+                        $(this).parents("li[data-department]").attr("data-department", data["department"]);
+                    });
+            }));
+
+    return departmentArea;
+}
+
 function adminConsoleDisplayListDeparture(departureTimestamp, archiveView) {
     var departureArea = $("<div></div>")
         .attr("data-section", "departure")
@@ -179,14 +257,16 @@ function adminConsoleDisplayLists(rootElementId, lists, archiveView) {
         $(`#${rootElementId}`)
             .append($("<li></li>")
                 .addClass("list-group-item")
-                .addClass("d-flex")
-                .addClass("justify-content-between")
-                .addClass("align-items-center")
                 .attr("data-shopping-list", list_info["name"])
-                .append(adminConsoleDisplayListName(list_info["name"], archiveView))
                 .append($("<div></div>")
-                    .append(adminConsoleDisplayListDeparture(list_info["departure"], archiveView))
-                    .append(adminConsoleListControl(archiveView))));
+                    .addClass("d-flex")
+                    .addClass("justify-content-between")
+                    .addClass("align-items-center")
+                    .append(adminConsoleDisplayListName(list_info["name"], archiveView))
+                    .append(adminConsoleDisplayListDepartment(list_info["department"]))
+                    .append($("<div></div>")
+                        .append(adminConsoleDisplayListDeparture(list_info["departure"], archiveView))
+                        .append(adminConsoleListControl(archiveView)))));
     });
 }
 
@@ -208,6 +288,25 @@ $("#new-list-button").click(function() {
     $("#create-list-form").css("display", "block");
     $("#create-list-name").val("");
     $("#create-list-datepicker").val("");
+    $("#create-list-department").empty();
+
+    $.get("{{ url_for('get_department_info') }}")
+        .done(function(data) {
+            $("#create-list-department")
+                .append($("<option></option>")
+                    .attr("value", "")
+                    .attr("selected", "")
+                    .text("<no department>"));
+
+            data["departments"]
+                .sort((dept1, dept2) => dept1["name"].localeCompare(dept2["name"]))
+                .forEach(department => {
+                    $("#create-list-department")
+                        .append($("<option></option>")
+                            .attr("value", department["name"])
+                            .text(department["name"]));
+                });
+        });
 });
 
 $("#create-list-cancel").click(function() {
@@ -216,6 +315,7 @@ $("#create-list-cancel").click(function() {
         .removeClass("was-validated");
     $("#create-list-name").val("");
     $("#create-list-datepicker").val("");
+    $("#create-list-department").empty();
 });
 
 $("#create-list-submit").click(function(event) {
@@ -225,8 +325,10 @@ $("#create-list-submit").click(function(event) {
         event.stopPropagation();
         form.addClass("was-validated");
     } else {
+        var name = $("#create-list-name").val();
         var departureSecondsSinceEpoch = moment($("#create-list-datepicker").val(), LIST_DATEPICKER_FORMAT).unix();
-        $.post("{{ url_for('create_new_list') }}", {name: $("#create-list-name").val(), departureSeconds: departureSecondsSinceEpoch})
+        var department = $("#create-list-department").val();
+        $.post("{{ url_for('create_new_list') }}", {name: name, departureSeconds: departureSecondsSinceEpoch, department: department})
             .done(function(data) {
                 adminConsoleDisplayLists("admin-console-lists-of-lists", data["lists"]);
                 loadShoppingListTab($("#create-list-name").val());
