@@ -1,7 +1,7 @@
 import datetime
 import operator
 
-from flask_security import SQLAlchemyUserDatastore, UserMixin, RoleMixin
+from flask_security import current_user, SQLAlchemyUserDatastore, UserMixin, RoleMixin
 from flask_sqlalchemy import SQLAlchemy
 
 from qmlist import qmlist
@@ -54,7 +54,12 @@ class ShoppingList(db.Model):
     @staticmethod
     def next():
         lists_after_now = ShoppingList.future()
-        next_list = min(lists_after_now, key=operator.attrgetter("departure")) if lists_after_now else None
+        if not current_user.has_role("admin") and current_user.department:
+            list_rows = lists_after_now.filter_by(department=current_user.department).all()
+        else:
+            list_rows = lists_after_now.all()
+
+        next_list = min(list_rows, key=operator.attrgetter("departure")) if list_rows else None
         if not next_list:
             all_lists = ShoppingList.active().all()
             next_list = max(all_lists, key=operator.attrgetter("departure")) if all_lists else None
@@ -62,7 +67,7 @@ class ShoppingList(db.Model):
 
     @staticmethod
     def future():
-        return ShoppingList.active().filter(ShoppingList.departure >= datetime.datetime.now().timestamp()).all()
+        return ShoppingList.active().filter(ShoppingList.departure >= datetime.datetime.now().timestamp())
 
 class Categories(db.Model):
     id = db.Column(db.Integer, primary_key=True)

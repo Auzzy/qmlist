@@ -62,6 +62,20 @@ def browse_items_page():
 
     return jsonify(utils.prepare_item_list(store_products_query, shopping_list_name, pageno, item_count))
 
+@app.route("/browse/lists")
+@login_required
+def list_shopping_lists():
+    shopping_lists = []
+    raw_shopping_lists = utils.get_list_info_raw(None)
+    user_department = current_user.department.name if current_user.department else None
+    if not user_department or current_user.has_role("admin"):
+        shopping_lists = raw_shopping_lists
+    else:
+        for list_info in raw_shopping_lists:
+            if user_department == list_info["department"]:
+                shopping_lists.append(list_info)
+    return jsonify({"lists": shopping_lists})
+
 @app.route("/load-list")
 @login_required
 def load_shopping_list():

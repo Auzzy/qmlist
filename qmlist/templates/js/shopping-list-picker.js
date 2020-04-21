@@ -37,7 +37,7 @@ function loadShoppingListTab(shoppingListName) {
 }
 
 $("#load-list-dropdown").on("show.bs.dropdown", function() {
-    $.get("{{ url_for('get_list_info') }}")
+    $.get("{{ url_for('list_shopping_lists') }}")
         .done(function(data) {
             $("#shopping-list-picker").empty();
             data["lists"].sort((first, second) => first["departure"] - second["departure"]);
