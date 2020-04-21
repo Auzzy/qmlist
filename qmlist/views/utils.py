@@ -41,9 +41,11 @@ def get_list_info_raw(archived=None):
 
     list_info = []
     for shopping_list in table.all():
+        department = shopping_list.department
         list_info.append({
             "name": shopping_list.name,
-            "departure": shopping_list.departure
+            "departure": shopping_list.departure,
+            "department": department.name if department else None
         })
     return list_info
 
