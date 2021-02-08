@@ -3,7 +3,7 @@ Flask-Security==3.0.0
 Flask-SQLAlchemy==2.4.1
 Flask-WTF==0.14.3
 
-httplib2==0.18.0
+httplib2==0.19.0
 RtmAPI==0.7.2
 psycopg2==2.7.5
 
